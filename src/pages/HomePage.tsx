@@ -2,12 +2,24 @@
 import { MicButton } from '@/components/MicButton';
 import { ListeningIndicator } from '@/components/ListeningIndicator';
 import { useVoice } from '@/contexts/VoiceContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useProfile } from '@/hooks/useProfile';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import ModeToggle from '@/components/ModeToggle';
 import { useNavigate } from 'react-router-dom';
-import { Zap, Plus, History, Volume2 } from 'lucide-react';
+import { Zap, Plus, History, Volume2, LogOut } from 'lucide-react';
 
 const HomePage = () => {
-  const { lastCommand, isListening } = useVoice();
+  const { lastCommand, isListening, currentMode } = useVoice();
+  const { user, signOut } = useAuth();
+  const { profile } = useProfile();
   const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
+  };
 
   const quickActions = [
     {
@@ -34,9 +46,25 @@ const HomePage = () => {
     <div className="min-h-screen p-6">
       <div className="max-w-md mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">SpeakEasy</h1>
-          <p className="text-muted-foreground">Tap to speak, control everything</p>
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-primary">SpeakEasy</h1>
+            <p className="text-sm text-muted-foreground">
+              Welcome back, {profile?.display_name || user?.email?.split('@')[0]}
+            </p>
+          </div>
+          <Button variant="ghost" size="icon" onClick={handleSignOut}>
+            <LogOut size={20} />
+          </Button>
+        </div>
+
+        {/* Mode Toggle */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <p className="text-sm text-muted-foreground">Current mode</p>
+            <p className="font-medium capitalize">{currentMode}</p>
+          </div>
+          <ModeToggle />
         </div>
 
         {/* Main Voice Control Area */}

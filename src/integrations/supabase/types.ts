@@ -14,7 +14,114 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      command_history: {
+        Row: {
+          action_performed: string
+          command_text: string
+          context_mode: string | null
+          created_at: string
+          id: string
+          response_time_ms: number | null
+          success: boolean | null
+          user_id: string
+        }
+        Insert: {
+          action_performed: string
+          command_text: string
+          context_mode?: string | null
+          created_at?: string
+          id?: string
+          response_time_ms?: number | null
+          success?: boolean | null
+          user_id: string
+        }
+        Update: {
+          action_performed?: string
+          command_text?: string
+          context_mode?: string | null
+          created_at?: string
+          id?: string
+          response_time_ms?: number | null
+          success?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: string
+          microphone_sensitivity: number | null
+          preferred_mode: string | null
+          updated_at: string
+          user_id: string
+          voice_feedback_enabled: boolean | null
+          wake_phrase: string | null
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          microphone_sensitivity?: number | null
+          preferred_mode?: string | null
+          updated_at?: string
+          user_id: string
+          voice_feedback_enabled?: boolean | null
+          wake_phrase?: string | null
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          microphone_sensitivity?: number | null
+          preferred_mode?: string | null
+          updated_at?: string
+          user_id?: string
+          voice_feedback_enabled?: boolean | null
+          wake_phrase?: string | null
+        }
+        Relationships: []
+      }
+      voice_commands: {
+        Row: {
+          action_data: Json | null
+          action_type: string
+          command_phrase: string
+          context_mode: string | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          updated_at: string
+          usage_count: number | null
+          user_id: string
+        }
+        Insert: {
+          action_data?: Json | null
+          action_type: string
+          command_phrase: string
+          context_mode?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string
+          usage_count?: number | null
+          user_id: string
+        }
+        Update: {
+          action_data?: Json | null
+          action_type?: string
+          command_phrase?: string
+          context_mode?: string | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          updated_at?: string
+          usage_count?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

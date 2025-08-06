@@ -83,12 +83,8 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
 
   // Initialize background voice service for continuous listening
   useEffect(() => {
-    if (isNativeMode) {
-      backgroundVoiceService.startBackgroundListening(handleVoiceCommand);
-    } else {
-      // For web, enable continuous listening automatically
-      enableContinuousListening();
-    }
+        // Don't auto-enable continuous listening to prevent errors
+        console.log('Voice provider initialized without auto-listening');
   }, [isNativeMode]);
 
   const handleVoiceCommand = async (command: string) => {
@@ -327,67 +323,9 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const enableContinuousListening = () => {
-    // For web browsers, start continuous speech recognition
-    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
-      const recognition = new SpeechRecognition();
-      
-      recognition.continuous = true;
-      recognition.interimResults = false;
-      recognition.lang = 'en-US';
-      
-      recognition.onresult = (event: any) => {
-        const transcript = event.results[event.results.length - 1][0].transcript.trim();
-        console.log('Continuous listening detected:', transcript);
-        
-        // Check for wake phrase
-        const lowerTranscript = transcript.toLowerCase();
-        if (lowerTranscript.includes('hey speakeasy') || lowerTranscript.includes(settings.wakePhrase.toLowerCase())) {
-          // Extract command after wake phrase
-          const command = transcript.replace(/hey speakeasy/i, '').replace(new RegExp(settings.wakePhrase, 'i'), '').trim();
-          if (command) {
-            handleVoiceCommand(command);
-          }
-        }
-      };
-      
-      recognition.onerror = (event: any) => {
-        console.log('Speech recognition error:', event.error);
-        // Only restart on specific errors, not all errors
-        if (event.error === 'no-speech' || event.error === 'audio-capture') {
-          setTimeout(() => {
-            try {
-              if (backgroundListening) {
-                recognition.start();
-              }
-            } catch (e) {
-              console.log('Could not restart recognition');
-            }
-          }, 2000);
-        }
-      };
-      
-      recognition.onend = () => {
-        // Only restart if background listening is still enabled
-        if (backgroundListening) {
-          setTimeout(() => {
-            try {
-              recognition.start();
-            } catch (e) {
-              console.log('Could not restart recognition');
-            }
-          }, 1000);
-        }
-      };
-      
-      try {
-        recognition.start();
-        setBackgroundListening(true);
-        console.log('Continuous listening started');
-      } catch (error) {
-        console.error('Failed to start continuous listening:', error);
-      }
-    }
+    // Disable continuous listening for now to prevent errors
+    console.log('Continuous listening disabled to prevent errors');
+    return;
   };
 
   return (

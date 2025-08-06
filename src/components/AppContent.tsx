@@ -20,17 +20,17 @@ const AppContent = () => {
   // Show splash screen on initial load
   useEffect(() => {
     if (!loading) {
-      // Show splash for 5 seconds, then proceed
+      // Show splash for 3 seconds, then proceed
       const timer = setTimeout(() => {
         setShowSplash(false);
         
         // If user is logged in and on home route, show welcome dashboard
         if (user && location.pathname === '/') {
           setShowWelcome(true);
-          // Auto-hide welcome after 8 seconds
-          setTimeout(() => setShowWelcome(false), 8000);
+          // Auto-hide welcome after 5 seconds
+          setTimeout(() => setShowWelcome(false), 5000);
         }
-      }, 5000);
+      }, 3000);
 
       return () => clearTimeout(timer);
     }

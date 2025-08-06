@@ -7,10 +7,18 @@ interface VoiceSettings {
   sensitivity: number;
 }
 
+interface CommandHistoryItem {
+  id: string;
+  command: string;
+  action: string;
+  timestamp: Date;
+}
+
 interface VoiceContextType {
   isListening: boolean;
   lastCommand: string;
   settings: VoiceSettings;
+  commandHistory: CommandHistoryItem[];
   startListening: () => void;
   stopListening: () => void;
   updateSettings: (newSettings: Partial<VoiceSettings>) => void;
@@ -21,6 +29,7 @@ const VoiceContext = createContext<VoiceContextType | undefined>(undefined);
 export const VoiceProvider = ({ children }: { children: ReactNode }) => {
   const [isListening, setIsListening] = useState(false);
   const [lastCommand, setLastCommand] = useState('');
+  const [commandHistory, setCommandHistory] = useState<CommandHistoryItem[]>([]);
   const [settings, setSettings] = useState<VoiceSettings>({
     wakePhrase: 'Hey Assistant',
     voiceFeedback: 'female',
@@ -32,14 +41,26 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
     // Simulate voice recognition
     setTimeout(() => {
       const commands = [
-        'Open calendar',
-        'Send message to John',
-        'Turn off lights',
-        'Play music',
-        'Set timer for 5 minutes'
+        { text: 'Open calendar', action: 'Opening Calendar app' },
+        { text: 'Send message to John', action: 'Opening Messages' },
+        { text: 'Turn off lights', action: 'Smart lights turned off' },
+        { text: 'Play music', action: 'Starting music playback' },
+        { text: 'Set timer for 5 minutes', action: '5-minute timer started' }
       ];
-      const randomCommand = commands[Math.floor(Math.random() * commands.length)];
-      setLastCommand(randomCommand);
+      const randomIndex = Math.floor(Math.random() * commands.length);
+      const selectedCommand = commands[randomIndex];
+      
+      setLastCommand(selectedCommand.text);
+      
+      // Add to command history
+      const newHistoryItem: CommandHistoryItem = {
+        id: Date.now().toString(),
+        command: selectedCommand.text,
+        action: selectedCommand.action,
+        timestamp: new Date(),
+      };
+      
+      setCommandHistory(prev => [newHistoryItem, ...prev]);
       setIsListening(false);
     }, 2000 + Math.random() * 3000);
   };
@@ -58,6 +79,7 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
         isListening,
         lastCommand,
         settings,
+        commandHistory,
         startListening,
         stopListening,
         updateSettings,

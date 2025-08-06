@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Logo } from '@/components/Logo';
 import { Progress } from '@/components/ui/progress';
+import { Mic } from 'lucide-react';
 
 interface SplashScreenProps {
   onComplete: () => void;
@@ -44,39 +45,97 @@ export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
   }, [onComplete]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background via-background to-background/50 p-6">
-      <div className="text-center space-y-8 max-w-md w-full">
-        {/* Logo with glow effect */}
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-background via-background/80 to-primary/10 p-6 relative overflow-hidden">
+      {/* Background animated elements */}
+      <div className="absolute inset-0">
+        {[...Array(6)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute rounded-full bg-gradient-primary opacity-5"
+            style={{
+              width: `${100 + i * 50}px`,
+              height: `${100 + i * 50}px`,
+              top: `${Math.random() * 100}%`,
+              left: `${Math.random() * 100}%`,
+              animation: `pulse 3s ease-in-out infinite ${i * 0.5}s`
+            }}
+          />
+        ))}
+      </div>
+
+      <div className="text-center space-y-12 max-w-md w-full relative z-10">
+        {/* Logo with enhanced glow */}
         <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20 rounded-full blur-3xl scale-150"></div>
-          <div className="relative">
+          <div className="absolute inset-0 bg-gradient-primary rounded-full blur-3xl scale-150 opacity-30 animate-pulse"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-primary via-accent to-primary rounded-full blur-2xl scale-125 opacity-20"></div>
+          <div className="relative transform hover:scale-105 transition-transform duration-500">
             <Logo size="lg" />
           </div>
         </div>
 
-        {/* Loading progress */}
-        <div className="space-y-4">
-          <Progress value={progress} className="w-full h-2" />
-          <p className="text-muted-foreground text-sm animate-pulse">
+        {/* Enhanced loading progress */}
+        <div className="space-y-6">
+          <div className="relative">
+            <Progress value={progress} className="w-full h-3 bg-muted/20" />
+            <div className="absolute inset-0 bg-gradient-primary rounded-full opacity-20 blur-sm"></div>
+          </div>
+          <p className="text-foreground text-base font-medium animate-pulse bg-gradient-primary bg-clip-text text-transparent">
             {currentText}
           </p>
         </div>
 
-        {/* Animated voice waves */}
-        <div className="flex justify-center items-center gap-1">
-          {[...Array(5)].map((_, i) => (
+        {/* Enhanced animated voice waves with mic icon */}
+        <div className="relative flex justify-center items-center">
+          {/* Central mic icon */}
+          <div className="relative z-10 w-16 h-16 rounded-full bg-gradient-primary flex items-center justify-center shadow-elegant">
+            <Mic size={24} className="text-white" />
+          </div>
+          
+          {/* Surrounding sound waves */}
+          <div className="absolute inset-0 flex justify-center items-center">
+            {[...Array(8)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute"
+                style={{
+                  transform: `rotate(${i * 45}deg) translateY(-${40 + i * 8}px)`,
+                  transformOrigin: 'center center'
+                }}
+              >
+                <div
+                  className="w-1 bg-gradient-primary rounded-full listening-bar opacity-60"
+                  style={{ 
+                    height: `${16 + Math.sin(i) * 12}px`,
+                    animationDelay: `${i * 0.1}s` 
+                  }}
+                />
+              </div>
+            ))}
+          </div>
+          
+          {/* Ripple effects */}
+          {[...Array(3)].map((_, i) => (
             <div
-              key={i}
-              className="listening-bar bg-primary/60"
-              style={{ animationDelay: `${i * 0.2}s` }}
+              key={`ripple-${i}`}
+              className="absolute rounded-full border-2 border-primary/20"
+              style={{
+                width: `${120 + i * 40}px`,
+                height: `${120 + i * 40}px`,
+                animation: `voice-ripple 3s ease-out infinite ${i * 0.8}s`
+              }}
             />
           ))}
         </div>
 
-        {/* Version info */}
-        <p className="text-xs text-muted-foreground/50">
-          SpeakEasy v1.0 • Voice Assistant
-        </p>
+        {/* Version info with gradient */}
+        <div className="space-y-2">
+          <p className="text-sm font-semibold bg-gradient-primary bg-clip-text text-transparent">
+            SpeakEasy v1.0
+          </p>
+          <p className="text-xs text-muted-foreground/70">
+            AI Voice Assistant • Powered by Advanced Neural Networks
+          </p>
+        </div>
       </div>
     </div>
   );

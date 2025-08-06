@@ -223,70 +223,100 @@ export class NativeVoiceCommands {
     }
   }
 
-  // Voice command parsing
+  // Enhanced voice command parsing with better accuracy
   parseVoiceCommand(command: string): SystemCommand | null {
     const lowerCommand = command.toLowerCase().trim();
+    console.log('Parsing command:', lowerCommand);
     
-    // App opening commands
-    if (lowerCommand.includes('open')) {
-      const appMatch = lowerCommand.match(/open\s+(.+)/);
-      if (appMatch) {
-        return {
-          type: 'open_app',
-          target: appMatch[1].trim()
-        };
+    // App opening commands - more flexible patterns
+    if (lowerCommand.match(/\b(open|launch|start)\b/)) {
+      const appPatterns = [
+        /(?:open|launch|start)\s+(?:the\s+)?(.+?)(?:\s+app)?$/,
+        /(?:can you |please )?(?:open|launch|start)\s+(.+)/,
+        /(?:go to|switch to)\s+(.+)/
+      ];
+      
+      for (const pattern of appPatterns) {
+        const match = lowerCommand.match(pattern);
+        if (match) {
+          const appName = match[1].trim().replace(/\s+app$/, '');
+          return {
+            type: 'open_app',
+            target: appName
+          };
+        }
       }
     }
     
-    // Text sending commands
-    if (lowerCommand.includes('send') || lowerCommand.includes('text') || lowerCommand.includes('message')) {
-      const textMatch = lowerCommand.match(/(?:send|text|message)\s+(.+?)(?:\s+to\s+(.+))?$/);
-      if (textMatch) {
-        return {
-          type: 'send_text',
-          text: textMatch[1].trim(),
-          target: textMatch[2]?.trim()
-        };
+    // Text sending commands - handle various formats
+    if (lowerCommand.match(/\b(send|text|message|type|write)\b/)) {
+      const textPatterns = [
+        /(?:send|text|message)\s+(?:a\s+)?(?:message\s+)?(?:saying\s+)?[""']?(.+?)[""']?(?:\s+to\s+(.+))?$/,
+        /(?:type|write)\s+[""']?(.+?)[""']?$/,
+        /(?:say|tell)\s+(.+?)(?:\s+to\s+(.+))?$/
+      ];
+      
+      for (const pattern of textPatterns) {
+        const match = lowerCommand.match(pattern);
+        if (match) {
+          return {
+            type: 'send_text',
+            text: match[1].trim().replace(/[""']/g, ''),
+            target: match[2]?.trim()
+          };
+        }
       }
     }
     
-    // Scrolling commands
-    if (lowerCommand.includes('scroll')) {
-      if (lowerCommand.includes('up')) {
+    // Scrolling commands - handle various phrasings
+    if (lowerCommand.match(/\b(scroll|swipe|move)\b/)) {
+      if (lowerCommand.match(/\b(up|upward|top)\b/)) {
         return { type: 'scroll', direction: 'up' };
-      } else if (lowerCommand.includes('down')) {
+      } else if (lowerCommand.match(/\b(down|downward|bottom)\b/)) {
         return { type: 'scroll', direction: 'down' };
-      } else if (lowerCommand.includes('left')) {
+      } else if (lowerCommand.match(/\b(left|leftward)\b/)) {
         return { type: 'scroll', direction: 'left' };
-      } else if (lowerCommand.includes('right')) {
+      } else if (lowerCommand.match(/\b(right|rightward)\b/)) {
         return { type: 'scroll', direction: 'right' };
       }
     }
     
-    // Navigation commands
-    if (lowerCommand.includes('home') || lowerCommand === 'go home') {
+    // Navigation commands - more natural language
+    if (lowerCommand.match(/\b(home|main screen|home screen)\b/) || lowerCommand === 'go home') {
       return { type: 'navigate', action: 'home' };
     }
-    if (lowerCommand.includes('back') || lowerCommand === 'go back') {
+    if (lowerCommand.match(/\b(back|previous|return)\b/) || lowerCommand.match(/go back/)) {
       return { type: 'navigate', action: 'back' };
     }
-    if (lowerCommand.includes('recent') || lowerCommand.includes('task')) {
+    if (lowerCommand.match(/\b(recent|task|switch|app switcher)\b/)) {
       return { type: 'navigate', action: 'recent_apps' };
     }
     
-    // System actions
-    if (lowerCommand.includes('volume up') || lowerCommand.includes('louder')) {
+    // System actions - handle variations
+    if (lowerCommand.match(/\b(volume up|louder|increase volume|turn up)\b/)) {
       return { type: 'system_action', action: 'volume_up' };
     }
-    if (lowerCommand.includes('volume down') || lowerCommand.includes('quieter')) {
+    if (lowerCommand.match(/\b(volume down|quieter|decrease volume|turn down|lower volume)\b/)) {
       return { type: 'system_action', action: 'volume_down' };
     }
     
-    // Click commands
-    if (lowerCommand.includes('click') || lowerCommand.includes('tap')) {
+    // Click/tap commands - more inclusive
+    if (lowerCommand.match(/\b(click|tap|touch|press|select)\b/)) {
+      // Check for coordinate patterns
+      const coordMatch = lowerCommand.match(/(?:at|on)\s+(\d+)\s*,?\s*(\d+)/);
+      if (coordMatch) {
+        return { 
+          type: 'click', 
+          coordinates: { 
+            x: parseInt(coordMatch[1]), 
+            y: parseInt(coordMatch[2]) 
+          }
+        };
+      }
       return { type: 'click' };
     }
     
+    console.log('No command pattern matched for:', lowerCommand);
     return null;
   }
 }

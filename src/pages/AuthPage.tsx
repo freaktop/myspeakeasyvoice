@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { Logo } from '@/components/Logo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Mic, Lock, User } from 'lucide-react';
+import { Lock, User, Sparkles } from 'lucide-react';
 
 const AuthPage = () => {
   const [email, setEmail] = useState('');
@@ -68,19 +69,37 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-6 bg-background">
+    <div className="min-h-screen flex items-center justify-center p-6 bg-gradient-to-br from-background via-background to-background/50">
       <div className="max-w-md w-full">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="p-3 rounded-full bg-primary/10">
-              <Mic size={32} className="text-primary" />
+          <div className="flex justify-center mb-6">
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20 rounded-full blur-2xl scale-150"></div>
+              <div className="relative">
+                <Logo size="lg" />
+              </div>
             </div>
-            <h1 className="text-3xl font-bold">SpeakEasy</h1>
           </div>
-          <p className="text-muted-foreground">
-            Your voice-controlled digital butler
+          <p className="text-muted-foreground text-lg">
+            Your intelligent voice assistant awaits
           </p>
+          
+          {/* Feature highlights */}
+          <div className="flex justify-center gap-6 mt-6 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1">
+              <Sparkles className="w-4 h-4 text-primary" />
+              Voice Control
+            </div>
+            <div className="flex items-center gap-1">
+              <Sparkles className="w-4 h-4 text-accent" />
+              System Integration
+            </div>
+            <div className="flex items-center gap-1">
+              <Sparkles className="w-4 h-4 text-primary" />
+              Always Listening
+            </div>
+          </div>
         </div>
 
         <Card className="bg-card border-border">

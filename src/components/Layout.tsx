@@ -1,14 +1,19 @@
 
+import { ReactNode } from 'react';
 import { Outlet } from 'react-router-dom';
 import { BottomNav } from './BottomNav';
 import ProtectedRoute from './ProtectedRoute';
 
-const Layout = () => {
+interface LayoutProps {
+  children?: ReactNode;
+}
+
+const Layout = ({ children }: LayoutProps) => {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-background">
         <main className="pb-20">
-          <Outlet />
+          {children || <Outlet />}
         </main>
         <BottomNav />
       </div>

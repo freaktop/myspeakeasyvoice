@@ -54,6 +54,7 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
   const [currentMode, setCurrentMode] = useState<'personal' | 'professional'>('personal');
   const [backgroundListening, setBackgroundListening] = useState(false);
   const [isNativeMode] = useState(Capacitor.isNativePlatform());
+  const [voiceFeedback, setVoiceFeedback] = useState<'male' | 'female' | 'none'>('male');
   
   // Convert database history to local format
   const commandHistory: CommandHistoryItem[] = history.map(item => ({
@@ -65,10 +66,10 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
     success: item.success,
   }));
 
-  // Settings from profile or defaults
+  // Settings from profile or defaults  
   const settings: VoiceSettings = {
     wakePhrase: profile?.wake_phrase || 'Hey SpeakEasy',
-    voiceFeedback: 'female', // Could be extended from profile
+    voiceFeedback: voiceFeedback,
     sensitivity: Math.round((profile?.microphone_sensitivity || 0.8) * 10),
     preferredMode: profile?.preferred_mode || 'personal',
   };
@@ -80,10 +81,13 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [profile?.preferred_mode]);
 
-  // Initialize background voice service
+  // Initialize background voice service for continuous listening
   useEffect(() => {
     if (isNativeMode) {
       backgroundVoiceService.startBackgroundListening(handleVoiceCommand);
+    } else {
+      // For web, enable continuous listening automatically
+      enableContinuousListening();
     }
   }, [isNativeMode]);
 
@@ -262,6 +266,9 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
     if (newSettings.wakePhrase !== undefined) {
       profileUpdates.wake_phrase = newSettings.wakePhrase;
     }
+    if (newSettings.voiceFeedback !== undefined) {
+      setVoiceFeedback(newSettings.voiceFeedback);
+    }
     if (newSettings.sensitivity !== undefined) {
       profileUpdates.microphone_sensitivity = newSettings.sensitivity / 10;
     }
@@ -316,6 +323,64 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
         description: "Please grant microphone and background permissions",
         variant: "destructive"
       });
+    }
+  };
+
+  const enableContinuousListening = () => {
+    // For web browsers, start continuous speech recognition
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+      const recognition = new SpeechRecognition();
+      
+      recognition.continuous = true;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
+      
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[event.results.length - 1][0].transcript.trim();
+        console.log('Continuous listening detected:', transcript);
+        
+        // Check for wake phrase
+        const lowerTranscript = transcript.toLowerCase();
+        if (lowerTranscript.includes('hey speakeasy') || lowerTranscript.includes(settings.wakePhrase.toLowerCase())) {
+          // Extract command after wake phrase
+          const command = transcript.replace(/hey speakeasy/i, '').replace(new RegExp(settings.wakePhrase, 'i'), '').trim();
+          if (command) {
+            handleVoiceCommand(command);
+          }
+        }
+      };
+      
+      recognition.onerror = (event: any) => {
+        console.log('Speech recognition error:', event.error);
+        // Restart recognition on error
+        setTimeout(() => {
+          try {
+            recognition.start();
+          } catch (e) {
+            console.log('Could not restart recognition');
+          }
+        }, 1000);
+      };
+      
+      recognition.onend = () => {
+        // Automatically restart recognition for continuous listening
+        setTimeout(() => {
+          try {
+            recognition.start();
+          } catch (e) {
+            console.log('Could not restart recognition');
+          }
+        }, 500);
+      };
+      
+      try {
+        recognition.start();
+        setBackgroundListening(true);
+        console.log('Continuous listening started');
+      } catch (error) {
+        console.error('Failed to start continuous listening:', error);
+      }
     }
   };
 

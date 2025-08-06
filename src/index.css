@@ -7,46 +7,53 @@
 
 @layer base {
   :root {
-    --background: 220 23% 6%;
-    --foreground: 220 15% 92%;
+    /* Black, Gold & Purple Theme */
+    --background: 0 0% 5%;
+    --foreground: 45 100% 85%;
 
-    --card: 220 20% 8%;
-    --card-foreground: 220 15% 92%;
+    --card: 0 0% 8%;
+    --card-foreground: 45 100% 85%;
 
-    --popover: 220 20% 8%;
-    --popover-foreground: 220 15% 92%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 45 100% 85%;
 
-    --primary: 217 100% 60%;
-    --primary-foreground: 220 23% 6%;
+    --primary: 45 100% 60%;  /* Gold */
+    --primary-foreground: 0 0% 5%;
 
-    --secondary: 220 15% 15%;
-    --secondary-foreground: 220 15% 92%;
+    --secondary: 270 100% 25%;  /* Deep Purple */
+    --secondary-foreground: 45 100% 85%;
 
-    --muted: 220 15% 12%;
-    --muted-foreground: 220 10% 65%;
+    --muted: 0 0% 12%;
+    --muted-foreground: 45 20% 65%;
 
-    --accent: 268 100% 70%;
-    --accent-foreground: 220 23% 6%;
+    --accent: 270 100% 65%;  /* Bright Purple */
+    --accent-foreground: 0 0% 5%;
 
     --destructive: 0 62% 50%;
-    --destructive-foreground: 220 15% 92%;
+    --destructive-foreground: 45 100% 85%;
 
-    --border: 220 15% 15%;
-    --input: 220 15% 15%;
-    --ring: 217 100% 60%;
+    --border: 45 30% 15%;
+    --input: 0 0% 12%;
+    --ring: 45 100% 60%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    /* Voice App Specific Colors */
-    --voice-active: 142 100% 60%;
-    --voice-listening: 268 100% 70%;
-    --voice-error: 0 62% 50%;
-    --voice-success: 142 100% 60%;
+    /* Voice App Specific Colors - Black, Gold & Purple */
+    --voice-active: 45 100% 60%;      /* Gold for active */
+    --voice-listening: 270 100% 65%;  /* Purple for listening */
+    --voice-error: 0 62% 50%;         /* Red for errors */
+    --voice-success: 142 100% 60%;    /* Green for success */
     
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(217 100% 60%) 0%, hsl(268 100% 70%) 100%);
-    --gradient-listening: linear-gradient(135deg, hsl(268 100% 70%) 0%, hsl(217 100% 60%) 100%);
-    --gradient-card: linear-gradient(135deg, hsl(220 20% 8%) 0%, hsl(220 15% 12%) 100%);
+    /* Elegant Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(45 100% 60%) 0%, hsl(270 100% 65%) 50%, hsl(0 0% 10%) 100%);
+    --gradient-listening: linear-gradient(135deg, hsl(270 100% 65%) 0%, hsl(45 100% 60%) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 8%) 0%, hsl(270 30% 10%) 50%, hsl(0 0% 12%) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(0 0% 5%) 0%, hsl(270 30% 8%) 50%, hsl(45 20% 10%) 100%);
+    
+    /* Logo colors */
+    --logo-gold: 45 100% 60%;
+    --logo-purple: 270 100% 65%;
+    --logo-black: 0 0% 5%;
   }
 
   * {
@@ -64,19 +71,19 @@
   .mic-button {
     @apply relative inline-flex items-center justify-center w-20 h-20 rounded-full;
     background: var(--gradient-primary);
-    box-shadow: 0 0 30px hsla(217, 100%, 60%, 0.3);
+    box-shadow: 0 0 30px hsla(45, 100%, 60%, 0.3);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .mic-button:hover {
     transform: scale(1.05);
-    box-shadow: 0 0 40px hsla(217, 100%, 60%, 0.5);
+    box-shadow: 0 0 40px hsla(45, 100%, 60%, 0.5);
   }
 
   .mic-button.listening {
     background: var(--gradient-listening);
     animation: pulse-listening 2s ease-in-out infinite;
-    box-shadow: 0 0 50px hsla(268, 100%, 70%, 0.6);
+    box-shadow: 0 0 50px hsla(270, 100%, 65%, 0.6);
   }
 
   .voice-wave {
@@ -110,7 +117,7 @@
   .quick-action-btn:hover {
     transform: translateY(-2px);
     border-color: hsl(var(--primary));
-    box-shadow: 0 5px 20px hsla(217, 100%, 60%, 0.2);
+    box-shadow: 0 5px 20px hsla(45, 100%, 60%, 0.2);
   }
 
   .settings-card {

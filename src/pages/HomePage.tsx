@@ -1,6 +1,7 @@
 
 import { MicButton } from '@/components/MicButton';
 import { ListeningIndicator } from '@/components/ListeningIndicator';
+import { Logo } from '@/components/Logo';
 import { useVoice } from '@/contexts/VoiceContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
@@ -58,7 +59,9 @@ const HomePage = () => {
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold mb-2">SpeakEasy</h1>
+          <div className="flex justify-center mb-4">
+            <Logo size="lg" />
+          </div>
           <p className="text-muted-foreground text-lg mb-4">
             Your intelligent voice assistant for seamless system-wide control
           </p>

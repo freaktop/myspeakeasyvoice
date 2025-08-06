@@ -13,7 +13,7 @@ const OnboardingPage = () => {
   const steps = [
     {
       icon: Mic,
-      title: 'Welcome to Voice Control',
+      title: 'Welcome to SpeakEasy',
       description: 'Control your device with simple voice commands. Speak naturally and let AI handle the rest.',
     },
     {

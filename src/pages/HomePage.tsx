@@ -35,7 +35,7 @@ const HomePage = () => {
       <div className="max-w-md mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">Voice Control</h1>
+          <h1 className="text-3xl font-bold mb-2">SpeakEasy</h1>
           <p className="text-muted-foreground">Tap to speak, control everything</p>
         </div>
 

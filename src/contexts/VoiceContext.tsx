@@ -353,25 +353,31 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
       
       recognition.onerror = (event: any) => {
         console.log('Speech recognition error:', event.error);
-        // Restart recognition on error
-        setTimeout(() => {
-          try {
-            recognition.start();
-          } catch (e) {
-            console.log('Could not restart recognition');
-          }
-        }, 1000);
+        // Only restart on specific errors, not all errors
+        if (event.error === 'no-speech' || event.error === 'audio-capture') {
+          setTimeout(() => {
+            try {
+              if (backgroundListening) {
+                recognition.start();
+              }
+            } catch (e) {
+              console.log('Could not restart recognition');
+            }
+          }, 2000);
+        }
       };
       
       recognition.onend = () => {
-        // Automatically restart recognition for continuous listening
-        setTimeout(() => {
-          try {
-            recognition.start();
-          } catch (e) {
-            console.log('Could not restart recognition');
-          }
-        }, 500);
+        // Only restart if background listening is still enabled
+        if (backgroundListening) {
+          setTimeout(() => {
+            try {
+              recognition.start();
+            } catch (e) {
+              console.log('Could not restart recognition');
+            }
+          }, 1000);
+        }
       };
       
       try {

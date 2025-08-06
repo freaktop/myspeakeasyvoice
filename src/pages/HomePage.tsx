@@ -12,7 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ModeToggle from '@/components/ModeToggle';
 import NativeCommandsPanel from '@/components/NativeCommandsPanel';
 import { useNavigate } from 'react-router-dom';
-import { Zap, Plus, History, Volume2, LogOut, Smartphone, Settings } from 'lucide-react';
+import { Zap, Plus, History, Volume2, LogOut, Smartphone, Settings, Mic } from 'lucide-react';
 
 const HomePage = () => {
   const { 
@@ -56,105 +56,133 @@ const HomePage = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/50">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-6 py-10">
         {/* Header */}
-        <div className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <Logo size="lg" />
+        <div className="text-center mb-12">
+          <div className="flex justify-center mb-6">
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20">
+              <Logo size="lg" />
+            </div>
           </div>
-          <p className="text-muted-foreground text-lg mb-4">
+          <p className="text-muted-foreground text-xl mb-8 max-w-2xl mx-auto leading-relaxed">
             Your intelligent voice assistant for seamless system-wide control
           </p>
           
-          <div className="flex items-center justify-center gap-4 mb-6 flex-wrap">
-            <Badge variant={currentMode === 'personal' ? 'default' : 'outline'}>
-              Personal
-            </Badge>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => switchMode(currentMode === 'personal' ? 'professional' : 'personal')}
-            >
-              Switch Mode
-            </Button>
-            <Badge variant={currentMode === 'professional' ? 'default' : 'outline'}>
-              Professional
-            </Badge>
-            {isNativeMode && (
-              <Badge variant="default" className="bg-green-600">
-                <Smartphone className="w-3 h-3 mr-1" />
-                Mobile App
+          <div className="flex items-center justify-center gap-4 mb-8 flex-wrap">
+            <div className="flex items-center gap-2 bg-gradient-to-r from-card to-card/50 p-2 rounded-xl border border-border/50">
+              <Badge variant={currentMode === 'personal' ? 'default' : 'outline'} className="px-3 py-2">
+                Personal
               </Badge>
-            )}
-            {backgroundListening && (
-              <Badge variant="default" className="bg-blue-600">
-                Background Active
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => switchMode(currentMode === 'personal' ? 'professional' : 'personal')}
+                className="px-4 py-2 hover:bg-primary/10"
+              >
+                Switch Mode
+              </Button>
+              <Badge variant={currentMode === 'professional' ? 'default' : 'outline'} className="px-3 py-2">
+                Professional
               </Badge>
-            )}
-            <Button variant="ghost" size="icon" onClick={handleSignOut}>
-              <LogOut size={16} />
-            </Button>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              {isNativeMode && (
+                <Badge variant="default" className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 px-3 py-2">
+                  <Smartphone className="w-4 h-4 mr-2" />
+                  Mobile App
+                </Badge>
+              )}
+              {backgroundListening && (
+                <Badge variant="default" className="bg-primary/20 text-primary border-primary/30 px-3 py-2">
+                  Background Active
+                </Badge>
+              )}
+              <Button variant="ghost" size="icon" onClick={handleSignOut} className="hover:bg-destructive/10 hover:text-destructive">
+                <LogOut size={18} />
+              </Button>
+            </div>
           </div>
         </div>
 
-        <Tabs defaultValue="control" className="max-w-6xl mx-auto">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="control">Voice Control</TabsTrigger>
-            <TabsTrigger value="system">System Commands</TabsTrigger>
-            <TabsTrigger value="history">Command History</TabsTrigger>
+        <Tabs defaultValue="control" className="max-w-7xl mx-auto">
+          <TabsList className="grid w-full grid-cols-3 h-14 bg-gradient-to-r from-card to-card/50 border border-border/50 rounded-xl">
+            <TabsTrigger value="control" className="text-base font-medium data-[state=active]:bg-primary/20 data-[state=active]:text-primary rounded-lg">Voice Control</TabsTrigger>
+            <TabsTrigger value="system" className="text-base font-medium data-[state=active]:bg-primary/20 data-[state=active]:text-primary rounded-lg">System Commands</TabsTrigger>
+            <TabsTrigger value="history" className="text-base font-medium data-[state=active]:bg-primary/20 data-[state=active]:text-primary rounded-lg">Command History</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="control" className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Volume2 className="w-5 h-5" />
+          <TabsContent value="control" className="space-y-8 mt-8">
+            <div className="grid md:grid-cols-2 gap-8">
+              <Card className="command-card">
+                <CardHeader className="pb-6">
+                  <CardTitle className="flex items-center gap-3 text-2xl">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+                      <Volume2 className="w-5 h-5 text-primary" />
+                    </div>
                     Voice Control
                   </CardTitle>
-                  <CardDescription>
-                    Start listening for voice commands in {currentMode} mode
+                  <CardDescription className="text-base">
+                    Start listening for voice commands in <span className="font-semibold text-accent">{currentMode}</span> mode
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex flex-col items-center space-y-4">
+                <CardContent className="space-y-6">
+                  <div className="flex flex-col items-center space-y-6">
                     <MicButton />
                     <ListeningIndicator />
                     {lastCommand && (
-                      <div className="text-center">
-                        <p className="text-sm text-muted-foreground">Last command:</p>
-                        <p className="font-medium">{lastCommand}</p>
+                      <div className="text-center p-4 bg-gradient-to-r from-muted/40 to-muted/20 rounded-xl border border-border/50">
+                        <p className="text-sm text-muted-foreground mb-1">Last command:</p>
+                        <p className="font-semibold text-lg">{lastCommand}</p>
                       </div>
                     )}
                   </div>
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Zap className="w-5 h-5" />
-                    Quick Actions
+              <Card className="command-card">
+                <CardHeader className="pb-6">
+                  <CardTitle className="flex items-center gap-3 text-2xl">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent/20 to-accent/10 flex items-center justify-center">
+                      <Zap className="w-5 h-5 text-accent" />
+                    </div>
+                    Quick Commands
                   </CardTitle>
-                  <CardDescription>
+                  <CardDescription className="text-base">
                     Common voice commands for your current mode
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {currentMode === 'personal' ? (
                       <>
-                        <p className="text-sm">"Hey SpeakEasy, open camera"</p>
-                        <p className="text-sm">"Hey SpeakEasy, send message to John"</p>
-                        <p className="text-sm">"Hey SpeakEasy, scroll down"</p>
-                        <p className="text-sm">"Hey SpeakEasy, go home"</p>
+                        <div className="p-3 bg-gradient-to-r from-muted/30 to-muted/15 rounded-lg border border-border/30">
+                          <p className="text-base font-medium">"Hey SpeakEasy, open camera"</p>
+                        </div>
+                        <div className="p-3 bg-gradient-to-r from-muted/30 to-muted/15 rounded-lg border border-border/30">
+                          <p className="text-base font-medium">"Hey SpeakEasy, send message to John"</p>
+                        </div>
+                        <div className="p-3 bg-gradient-to-r from-muted/30 to-muted/15 rounded-lg border border-border/30">
+                          <p className="text-base font-medium">"Hey SpeakEasy, scroll down"</p>
+                        </div>
+                        <div className="p-3 bg-gradient-to-r from-muted/30 to-muted/15 rounded-lg border border-border/30">
+                          <p className="text-base font-medium">"Hey SpeakEasy, go home"</p>
+                        </div>
                       </>
                     ) : (
                       <>
-                        <p className="text-sm">"Hey SpeakEasy, open calendar"</p>
-                        <p className="text-sm">"Hey SpeakEasy, open settings"</p>
-                        <p className="text-sm">"Hey SpeakEasy, volume up"</p>
-                        <p className="text-sm">"Hey SpeakEasy, go back"</p>
+                        <div className="p-3 bg-gradient-to-r from-muted/30 to-muted/15 rounded-lg border border-border/30">
+                          <p className="text-base font-medium">"Hey SpeakEasy, open calendar"</p>
+                        </div>
+                        <div className="p-3 bg-gradient-to-r from-muted/30 to-muted/15 rounded-lg border border-border/30">
+                          <p className="text-base font-medium">"Hey SpeakEasy, open settings"</p>
+                        </div>
+                        <div className="p-3 bg-gradient-to-r from-muted/30 to-muted/15 rounded-lg border border-border/30">
+                          <p className="text-base font-medium">"Hey SpeakEasy, volume up"</p>
+                        </div>
+                        <div className="p-3 bg-gradient-to-r from-muted/30 to-muted/15 rounded-lg border border-border/30">
+                          <p className="text-base font-medium">"Hey SpeakEasy, go back"</p>
+                        </div>
                       </>
                     )}
                   </div>
@@ -167,48 +195,56 @@ const HomePage = () => {
             <NativeCommandsPanel />
           </TabsContent>
 
-          <TabsContent value="history">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <History className="w-5 h-5" />
+          <TabsContent value="history" className="mt-8">
+            <Card className="command-card">
+              <CardHeader className="pb-6">
+                <CardTitle className="flex items-center gap-3 text-2xl">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent/20 to-accent/10 flex items-center justify-center">
+                    <History className="w-5 h-5 text-accent" />
+                  </div>
                   Recent Commands
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-base">
                   Your voice command history
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 {commandHistory.length > 0 ? (
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {commandHistory.slice(0, 10).map((item) => (
-                      <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div>
-                          <p className="font-medium text-sm">{item.command}</p>
-                          <p className="text-xs text-muted-foreground">{item.action}</p>
+                      <div key={item.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-muted/40 to-muted/20 rounded-xl border border-border/50 hover:border-accent/30 transition-colors">
+                        <div className="flex-1">
+                          <p className="font-semibold text-base mb-1">{item.command}</p>
+                          <p className="text-sm text-muted-foreground">{item.action}</p>
                         </div>
-                        <div className="text-right">
-                          <p className="text-xs text-muted-foreground">
+                        <div className="text-right flex flex-col items-end gap-2">
+                          <p className="text-sm text-muted-foreground">
                             {item.timestamp.toLocaleTimeString()}
                           </p>
-                          {item.contextMode && (
-                            <Badge variant="outline" className="text-xs">
-                              {item.contextMode}
-                            </Badge>
-                          )}
-                          {item.success !== undefined && (
-                            <Badge variant={item.success ? "default" : "destructive"} className="text-xs ml-1">
-                              {item.success ? "Success" : "Failed"}
-                            </Badge>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {item.contextMode && (
+                              <Badge variant="outline" className="text-xs font-medium">
+                                {item.contextMode}
+                              </Badge>
+                            )}
+                            {item.success !== undefined && (
+                              <Badge variant={item.success ? "default" : "destructive"} className="text-xs font-medium">
+                                {item.success ? "Success" : "Failed"}
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p className="text-muted-foreground text-center py-4">
-                    No commands yet. Start by pressing the microphone button!
-                  </p>
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-muted/50 to-muted/30 flex items-center justify-center">
+                      <Mic className="w-8 h-8 text-muted-foreground" />
+                    </div>
+                    <p className="text-muted-foreground text-lg mb-2">No commands yet</p>
+                    <p className="text-sm text-muted-foreground">Start by pressing the microphone button!</p>
+                  </div>
                 )}
               </CardContent>
             </Card>

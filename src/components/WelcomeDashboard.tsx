@@ -55,111 +55,131 @@ export const WelcomeDashboard = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/50 p-6">
-      <div className="max-w-4xl mx-auto space-y-8">
+      <div className="max-w-5xl mx-auto space-y-10">
         {/* Welcome Header */}
-        <div className="text-center space-y-4">
-          <div className="flex justify-center mb-4">
-            <Logo size="md" />
+        <div className="text-center space-y-6 py-8">
+          <div className="flex justify-center mb-6">
+            <div className="p-4 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20">
+              <Logo size="md" />
+            </div>
           </div>
           
-          <div className="space-y-2">
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+          <div className="space-y-4">
+            <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent leading-tight">
               {greeting}, {displayName}!
             </h1>
-            <p className="text-muted-foreground text-lg">
+            <p className="text-muted-foreground text-xl max-w-2xl mx-auto leading-relaxed">
               Welcome to your voice-controlled digital assistant
             </p>
           </div>
 
           {/* Status badges */}
-          <div className="flex items-center justify-center gap-3 flex-wrap">
+          <div className="flex items-center justify-center gap-4 flex-wrap mt-8">
             {isNativeMode && (
-              <Badge variant="default" className="bg-green-600/20 text-green-400 border-green-600/30">
-                <Sparkles className="w-3 h-3 mr-1" />
+              <Badge variant="default" className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30 px-4 py-2 text-sm font-medium">
+                <Sparkles className="w-4 h-4 mr-2" />
                 Mobile Ready
               </Badge>
             )}
             {backgroundListening && (
-              <Badge variant="default" className="bg-primary/20 text-primary border-primary/30">
+              <Badge variant="default" className="bg-primary/20 text-primary border-primary/30 px-4 py-2 text-sm font-medium">
                 Always Listening
               </Badge>
             )}
-            <Badge variant="outline" className="border-accent/30 text-accent">
+            <Badge variant="outline" className="border-accent/30 text-accent px-4 py-2 text-sm font-medium hover:bg-accent/10 transition-colors">
               Voice Assistant Active
             </Badge>
           </div>
         </div>
 
         {/* Stats Cards */}
-        <div className="grid md:grid-cols-3 gap-6">
-          <Card className="command-card">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-primary/20 flex items-center justify-center">
-                  <Zap className="w-4 h-4 text-primary" />
+        <div className="grid md:grid-cols-3 gap-8">
+          <Card className="command-card group hover:scale-[1.02] transition-all duration-300">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center border border-primary/20 group-hover:border-primary/40 transition-colors">
+                  <Zap className="w-6 h-6 text-primary" />
                 </div>
-                Commands Today
+                <div>
+                  <div className="text-xl font-semibold">Commands Today</div>
+                  <div className="text-sm text-muted-foreground font-normal">Voice commands executed</div>
+                </div>
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-primary">{todayCommands}</div>
-              <p className="text-sm text-muted-foreground">Voice commands executed</p>
+            <CardContent className="pt-0">
+              <div className="text-4xl font-bold text-primary mb-2">{todayCommands}</div>
+              <div className="w-full bg-muted/30 rounded-full h-2">
+                <div className="bg-gradient-to-r from-primary to-primary/60 h-2 rounded-full transition-all duration-500" style={{width: `${Math.min((todayCommands / 10) * 100, 100)}%`}}></div>
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="command-card">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-accent/20 flex items-center justify-center">
-                  <Clock className="w-4 h-4 text-accent" />
+          <Card className="command-card group hover:scale-[1.02] transition-all duration-300">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-accent/20 to-accent/10 flex items-center justify-center border border-accent/20 group-hover:border-accent/40 transition-colors">
+                  <Clock className="w-6 h-6 text-accent" />
                 </div>
-                Total Commands
+                <div>
+                  <div className="text-xl font-semibold">Total Commands</div>
+                  <div className="text-sm text-muted-foreground font-normal">All time usage</div>
+                </div>
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-accent">{totalCommands}</div>
-              <p className="text-sm text-muted-foreground">All time usage</p>
+            <CardContent className="pt-0">
+              <div className="text-4xl font-bold text-accent mb-2">{totalCommands}</div>
+              <div className="w-full bg-muted/30 rounded-full h-2">
+                <div className="bg-gradient-to-r from-accent to-accent/60 h-2 rounded-full transition-all duration-500" style={{width: `${Math.min((totalCommands / 50) * 100, 100)}%`}}></div>
+              </div>
             </CardContent>
           </Card>
 
-          <Card className="command-card">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-green-600/20 flex items-center justify-center">
-                  <Mic className="w-4 h-4 text-green-400" />
+          <Card className="command-card group hover:scale-[1.02] transition-all duration-300">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-xl flex items-center gap-3">
+                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-500/10 flex items-center justify-center border border-emerald-500/20 group-hover:border-emerald-500/40 transition-colors">
+                  <Mic className="w-6 h-6 text-emerald-400" />
                 </div>
-                Status
+                <div>
+                  <div className="text-xl font-semibold">Status</div>
+                  <div className="text-sm text-muted-foreground font-normal">System operational</div>
+                </div>
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="text-xl font-bold text-green-400">Ready</div>
-              <p className="text-sm text-muted-foreground">System operational</p>
+            <CardContent className="pt-0">
+              <div className="flex items-center gap-3">
+                <div className="text-2xl font-bold text-emerald-400">Ready</div>
+                <div className="w-3 h-3 bg-emerald-400 rounded-full animate-pulse"></div>
+              </div>
             </CardContent>
           </Card>
         </div>
 
         {/* Quick Start Actions */}
-        <div className="space-y-6">
-          <h2 className="text-2xl font-bold text-center">Quick Start</h2>
+        <div className="space-y-8">
+          <div className="text-center">
+            <h2 className="text-3xl font-bold mb-3">Quick Start</h2>
+            <p className="text-muted-foreground text-lg">Get started with these common actions</p>
+          </div>
           
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-3 gap-8">
             {quickStartActions.map((action, index) => (
               <Card 
                 key={index}
-                className="command-card cursor-pointer group transition-all duration-300 hover:scale-105"
+                className="command-card cursor-pointer group transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl hover:shadow-primary/20 border-border/50 hover:border-primary/30"
                 onClick={action.action}
               >
-                <CardHeader>
-                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${action.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}>
-                    <action.icon className="w-6 h-6 text-black" />
+                <CardHeader className="pb-4">
+                  <div className={`w-16 h-16 rounded-2xl bg-gradient-to-r ${action.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300 shadow-lg`}>
+                    <action.icon className="w-8 h-8 text-black" />
                   </div>
-                  <CardTitle className="text-lg">{action.title}</CardTitle>
-                  <CardDescription>{action.description}</CardDescription>
+                  <CardTitle className="text-xl font-semibold mb-2">{action.title}</CardTitle>
+                  <CardDescription className="text-base">{action.description}</CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <Button variant="ghost" size="sm" className="w-full group-hover:bg-primary/10">
+                <CardContent className="pt-0">
+                  <Button variant="ghost" size="lg" className="w-full group-hover:bg-primary/10 border border-transparent group-hover:border-primary/20 transition-all duration-300">
                     Get Started
-                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </CardContent>
               </Card>
@@ -170,27 +190,29 @@ export const WelcomeDashboard = () => {
         {/* Recent Activity */}
         {commandHistory.length > 0 && (
           <Card className="command-card">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Clock className="w-5 h-5" />
+            <CardHeader className="pb-6">
+              <CardTitle className="flex items-center gap-3 text-2xl">
+                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent/20 to-accent/10 flex items-center justify-center">
+                  <Clock className="w-5 h-5 text-accent" />
+                </div>
                 Recent Activity
               </CardTitle>
-              <CardDescription>Your latest voice commands</CardDescription>
+              <CardDescription className="text-base">Your latest voice commands</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {commandHistory.slice(0, 3).map((item) => (
-                  <div key={item.id} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
-                    <div>
-                      <p className="font-medium text-sm">{item.command}</p>
-                      <p className="text-xs text-muted-foreground">{item.action}</p>
+                  <div key={item.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-muted/40 to-muted/20 rounded-xl border border-border/50 hover:border-accent/30 transition-colors">
+                    <div className="flex-1">
+                      <p className="font-semibold text-base mb-1">{item.command}</p>
+                      <p className="text-sm text-muted-foreground">{item.action}</p>
                     </div>
-                    <div className="text-right">
-                      <p className="text-xs text-muted-foreground">
+                    <div className="text-right flex flex-col items-end gap-2">
+                      <p className="text-sm text-muted-foreground">
                         {item.timestamp.toLocaleTimeString()}
                       </p>
                       {item.success !== undefined && (
-                        <Badge variant={item.success ? "default" : "destructive"} className="text-xs">
+                        <Badge variant={item.success ? "default" : "destructive"} className="text-xs font-medium">
                           {item.success ? "✓" : "✗"}
                         </Badge>
                       )}
@@ -201,34 +223,35 @@ export const WelcomeDashboard = () => {
               
               <Button 
                 variant="outline" 
-                size="sm" 
-                className="w-full mt-4"
+                size="lg" 
+                className="w-full mt-6 border-primary/20 hover:border-primary/40 hover:bg-primary/5 transition-colors"
                 onClick={() => navigate('/?tab=history')}
               >
                 View All Commands
+                <ArrowRight className="w-4 h-4 ml-2" />
               </Button>
             </CardContent>
           </Card>
         )}
 
         {/* Get Started Message */}
-        <Card className="command-card text-center">
-          <CardContent className="pt-6">
-            <div className="space-y-4">
-              <div className="w-16 h-16 mx-auto rounded-full bg-gradient-to-r from-primary to-accent flex items-center justify-center">
-                <Mic className="w-8 h-8 text-black" />
+        <Card className="command-card text-center border-primary/20 bg-gradient-to-br from-card to-card/50">
+          <CardContent className="pt-8 pb-8">
+            <div className="space-y-6">
+              <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-r from-primary to-accent flex items-center justify-center shadow-lg">
+                <Mic className="w-10 h-10 text-black" />
               </div>
-              <div>
-                <h3 className="text-xl font-bold mb-2">Ready for Voice Commands</h3>
-                <p className="text-muted-foreground">
-                  Say <span className="font-mono bg-muted px-2 py-1 rounded text-primary">
+              <div className="space-y-3">
+                <h3 className="text-2xl font-bold">Ready for Voice Commands</h3>
+                <p className="text-muted-foreground text-lg max-w-md mx-auto leading-relaxed">
+                  Say <span className="font-mono bg-gradient-to-r from-primary/20 to-accent/20 px-3 py-1 rounded-lg text-primary font-semibold border border-primary/20">
                     "Hey SpeakEasy"
                   </span> followed by your command
                 </p>
               </div>
-              <Button onClick={() => navigate('/')} size="lg" className="mt-4">
+              <Button onClick={() => navigate('/')} size="lg" className="mt-6 px-8 py-3 text-lg font-semibold bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-black border-0 shadow-lg hover:shadow-xl transition-all duration-300">
                 Start Voice Control
-                <Mic className="w-4 h-4 ml-2" />
+                <Mic className="w-5 h-5 ml-2" />
               </Button>
             </div>
           </CardContent>

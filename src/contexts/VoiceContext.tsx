@@ -106,12 +106,15 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const executeSystemCommand = async (command: string): Promise<boolean> => {
+    console.log('Executing system command:', command);
     const systemCommand = nativeVoiceCommands.parseVoiceCommand(command);
+    console.log('Parsed system command:', systemCommand);
     
     if (systemCommand) {
       const success = await nativeVoiceCommands.executeCommand(systemCommand);
+      console.log('System command execution result:', success);
       
-      if (user && success) {
+      if (user) {
         // Log system command execution
         await logCommandExecution(
           command,
@@ -125,6 +128,7 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
       return success;
     }
     
+    console.log('No system command found for:', command);
     return false;
   };
 
@@ -179,31 +183,66 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
         description: "Say 'Hey SpeakEasy' followed by your command",
       });
     } else {
-      // Web simulation for testing
+      // Web simulation with actual voice recognition for testing
       setIsListening(true);
       
-      setTimeout(() => {
-        const personalCommands = [
-          { text: 'Play my workout playlist', action: 'Starting workout music' },
-          { text: 'Call mom', action: 'Calling Mom' },
-          { text: 'Set dinner reminder', action: 'Dinner reminder set for 6 PM' },
-          { text: 'Turn off bedroom lights', action: 'Bedroom lights turned off' },
-        ];
+      // Try to use Web Speech API for testing
+      if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+        const recognition = new SpeechRecognition();
         
-        const professionalCommands = [
-          { text: 'Book meeting room for 2 PM', action: 'Conference room booked' },
-          { text: 'Send follow-up email to client', action: 'Draft email created' },
-          { text: 'Check my calendar', action: 'Opening calendar' },
-          { text: 'Start focus timer', action: '25-minute focus timer started' },
-        ];
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.lang = 'en-US';
         
-        const availableCommands = currentMode === 'personal' ? personalCommands : professionalCommands;
-        const randomIndex = Math.floor(Math.random() * availableCommands.length);
-        const selectedCommand = availableCommands[randomIndex];
+        recognition.onresult = (event: any) => {
+          const transcript = event.results[0][0].transcript.trim();
+          console.log('Web speech recognition result:', transcript);
+          handleVoiceCommand(transcript);
+          setIsListening(false);
+        };
         
-        handleVoiceCommand(selectedCommand.text);
-        setIsListening(false);
-      }, 2000 + Math.random() * 3000);
+        recognition.onerror = (event: any) => {
+          console.error('Speech recognition error:', event.error);
+          setIsListening(false);
+          toast({
+            title: "Voice Recognition Error",
+            description: "Please check microphone permissions",
+            variant: "destructive"
+          });
+        };
+        
+        recognition.onend = () => {
+          setIsListening(false);
+        };
+        
+        recognition.start();
+        
+        toast({
+          title: "Listening...",
+          description: "Try saying 'open camera' or 'scroll down'",
+        });
+      } else {
+        // Fallback simulation
+        setTimeout(() => {
+          const testCommands = [
+            'open camera',
+            'scroll down',
+            'volume up',
+            'go back',
+            'send hello to john'
+          ];
+          
+          const randomCommand = testCommands[Math.floor(Math.random() * testCommands.length)];
+          handleVoiceCommand(randomCommand);
+          setIsListening(false);
+        }, 2000);
+        
+        toast({
+          title: "Simulated Voice Command",
+          description: "Testing with random system command",
+        });
+      }
     }
   };
 

@@ -3,6 +3,10 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 import { useAuth } from './AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useVoiceCommands } from '@/hooks/useVoiceCommands';
+import { nativeVoiceCommands, SystemCommand } from '@/utils/NativeVoiceCommands';
+import { backgroundVoiceService } from '@/utils/BackgroundVoiceService';
+import { Capacitor } from '@capacitor/core';
+import { useToast } from '@/components/ui/use-toast';
 
 interface VoiceSettings {
   wakePhrase: string;
@@ -26,11 +30,15 @@ interface VoiceContextType {
   settings: VoiceSettings;
   commandHistory: CommandHistoryItem[];
   currentMode: 'personal' | 'professional';
+  isNativeMode: boolean;
+  backgroundListening: boolean;
   startListening: () => void;
   stopListening: () => void;
   updateSettings: (newSettings: Partial<VoiceSettings>) => void;
   switchMode: (mode: 'personal' | 'professional') => void;
   addCustomCommand: (command: string, action: string, contextMode?: string) => Promise<void>;
+  enableBackgroundListening: () => Promise<void>;
+  executeSystemCommand: (command: string) => Promise<boolean>;
 }
 
 const VoiceContext = createContext<VoiceContextType | undefined>(undefined);
@@ -39,10 +47,13 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const { profile, updateProfile } = useProfile();
   const { commands, history, logCommandExecution, addCommand } = useVoiceCommands();
+  const { toast } = useToast();
   
   const [isListening, setIsListening] = useState(false);
   const [lastCommand, setLastCommand] = useState('');
   const [currentMode, setCurrentMode] = useState<'personal' | 'professional'>('personal');
+  const [backgroundListening, setBackgroundListening] = useState(false);
+  const [isNativeMode] = useState(Capacitor.isNativePlatform());
   
   // Convert database history to local format
   const commandHistory: CommandHistoryItem[] = history.map(item => ({
@@ -69,50 +80,138 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [profile?.preferred_mode]);
 
-  const startListening = () => {
-    setIsListening(true);
+  // Initialize background voice service
+  useEffect(() => {
+    if (isNativeMode) {
+      backgroundVoiceService.startBackgroundListening(handleVoiceCommand);
+    }
+  }, [isNativeMode]);
+
+  const handleVoiceCommand = async (command: string) => {
+    console.log('Voice command received:', command);
+    setLastCommand(command);
     
-    // Enhanced simulation with context-aware commands
-    setTimeout(() => {
-      const personalCommands = [
-        { text: 'Play my workout playlist', action: 'Starting workout music' },
-        { text: 'Call mom', action: 'Calling Mom' },
-        { text: 'Set dinner reminder', action: 'Dinner reminder set for 6 PM' },
-        { text: 'Turn off bedroom lights', action: 'Bedroom lights turned off' },
-      ];
+    // Try to execute as system command first
+    const executed = await executeSystemCommand(command);
+    
+    if (executed) {
+      toast({
+        title: "Command Executed",
+        description: `System command: ${command}`,
+      });
+    } else {
+      // Fall back to regular voice command processing
+      await processRegularCommand(command);
+    }
+  };
+
+  const executeSystemCommand = async (command: string): Promise<boolean> => {
+    const systemCommand = nativeVoiceCommands.parseVoiceCommand(command);
+    
+    if (systemCommand) {
+      const success = await nativeVoiceCommands.executeCommand(systemCommand);
       
-      const professionalCommands = [
-        { text: 'Book meeting room for 2 PM', action: 'Conference room booked' },
-        { text: 'Send follow-up email to client', action: 'Draft email created' },
-        { text: 'Check my calendar', action: 'Opening calendar' },
-        { text: 'Start focus timer', action: '25-minute focus timer started' },
-      ];
-      
-      const availableCommands = currentMode === 'personal' ? personalCommands : professionalCommands;
-      const randomIndex = Math.floor(Math.random() * availableCommands.length);
-      const selectedCommand = availableCommands[randomIndex];
-      
-      setLastCommand(selectedCommand.text);
-      
-      // Log to database if user is authenticated
-      if (user) {
-        setTimeout(() => {
-          logCommandExecution(
-            selectedCommand.text,
-            selectedCommand.action,
-            currentMode,
-            true,
-            Math.floor(Math.random() * 500) + 200
-          );
-        }, 0);
+      if (user && success) {
+        // Log system command execution
+        await logCommandExecution(
+          command,
+          `System: ${systemCommand.type}`,
+          currentMode,
+          success,
+          Date.now()
+        );
       }
       
-      setIsListening(false);
-    }, 2000 + Math.random() * 3000);
+      return success;
+    }
+    
+    return false;
+  };
+
+  const processRegularCommand = async (command: string) => {
+    // Enhanced simulation with context-aware commands
+    const personalCommands = [
+      { text: 'Play my workout playlist', action: 'Starting workout music' },
+      { text: 'Call mom', action: 'Calling Mom' },
+      { text: 'Set dinner reminder', action: 'Dinner reminder set for 6 PM' },
+      { text: 'Turn off bedroom lights', action: 'Bedroom lights turned off' },
+    ];
+    
+    const professionalCommands = [
+      { text: 'Book meeting room for 2 PM', action: 'Conference room booked' },
+      { text: 'Send follow-up email to client', action: 'Draft email created' },
+      { text: 'Check my calendar', action: 'Opening calendar' },
+      { text: 'Start focus timer', action: '25-minute focus timer started' },
+    ];
+    
+    const availableCommands = currentMode === 'personal' ? personalCommands : professionalCommands;
+    const matchedCommand = availableCommands.find(cmd => 
+      command.toLowerCase().includes(cmd.text.toLowerCase().split(' ')[0])
+    );
+    
+    const selectedCommand = matchedCommand || availableCommands[0];
+    
+    // Log to database if user is authenticated
+    if (user) {
+      await logCommandExecution(
+        command,
+        selectedCommand.action,
+        currentMode,
+        true,
+        Math.floor(Math.random() * 500) + 200
+      );
+    }
+
+    toast({
+      title: "Command Processed",
+      description: selectedCommand.action,
+    });
+  };
+
+  const startListening = () => {
+    if (isNativeMode) {
+      // For native platforms, use continuous background listening
+      backgroundVoiceService.startListening();
+      setIsListening(true);
+      
+      toast({
+        title: "Voice Assistant Active",
+        description: "Say 'Hey SpeakEasy' followed by your command",
+      });
+    } else {
+      // Web simulation for testing
+      setIsListening(true);
+      
+      setTimeout(() => {
+        const personalCommands = [
+          { text: 'Play my workout playlist', action: 'Starting workout music' },
+          { text: 'Call mom', action: 'Calling Mom' },
+          { text: 'Set dinner reminder', action: 'Dinner reminder set for 6 PM' },
+          { text: 'Turn off bedroom lights', action: 'Bedroom lights turned off' },
+        ];
+        
+        const professionalCommands = [
+          { text: 'Book meeting room for 2 PM', action: 'Conference room booked' },
+          { text: 'Send follow-up email to client', action: 'Draft email created' },
+          { text: 'Check my calendar', action: 'Opening calendar' },
+          { text: 'Start focus timer', action: '25-minute focus timer started' },
+        ];
+        
+        const availableCommands = currentMode === 'personal' ? personalCommands : professionalCommands;
+        const randomIndex = Math.floor(Math.random() * availableCommands.length);
+        const selectedCommand = availableCommands[randomIndex];
+        
+        handleVoiceCommand(selectedCommand.text);
+        setIsListening(false);
+      }, 2000 + Math.random() * 3000);
+    }
   };
 
   const stopListening = () => {
     setIsListening(false);
+    if (isNativeMode) {
+      backgroundVoiceService.stopListening();
+    }
   };
 
   const updateSettings = async (newSettings: Partial<VoiceSettings>) => {
@@ -153,6 +252,33 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  const enableBackgroundListening = async () => {
+    if (!isNativeMode) {
+      toast({
+        title: "Background Listening",
+        description: "Background listening is only available on mobile devices",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      await backgroundVoiceService.enableAlwaysListening();
+      setBackgroundListening(true);
+      
+      toast({
+        title: "Background Listening Enabled",
+        description: "Voice assistant will now listen even when app is closed",
+      });
+    } catch (error) {
+      toast({
+        title: "Permission Required",
+        description: "Please grant microphone and background permissions",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <VoiceContext.Provider
       value={{
@@ -161,11 +287,15 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
         settings,
         commandHistory,
         currentMode,
+        isNativeMode,
+        backgroundListening,
         startListening,
         stopListening,
         updateSettings,
         switchMode,
         addCustomCommand,
+        enableBackgroundListening,
+        executeSystemCommand,
       }}
     >
       {children}

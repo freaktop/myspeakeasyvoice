@@ -26,10 +26,10 @@ export const MicButton = () => {
       {/* Main mic button */}
       <button
         onClick={handleClick}
-        className={`relative w-20 h-20 rounded-full border-2 transition-all duration-300 ${
+        className={`mic-button ${isListening ? 'listening' : ''} relative rounded-full border-2 transition-all duration-300 ${
           isListening 
-            ? 'bg-voice-error border-voice-error shadow-elegant scale-110' 
-            : 'bg-gradient-primary border-primary/50 hover:border-primary shadow-glow hover:scale-105'
+            ? 'border-voice-listening shadow-2xl' 
+            : 'border-primary/50 hover:border-primary'
         }`}
       >
         {/* Sound waves around mic */}
@@ -54,9 +54,9 @@ export const MicButton = () => {
         
         {/* Mic icon */}
         {isListening ? (
-          <MicOff size={32} className="text-white relative z-10" />
+          <MicOff size={32} className="text-primary-foreground relative z-10" />
         ) : (
-          <Mic size={32} className="text-white relative z-10" />
+          <Mic size={32} className="text-primary-foreground relative z-10" />
         )}
       </button>
       

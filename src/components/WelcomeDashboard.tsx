@@ -54,21 +54,21 @@ export const WelcomeDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/50 p-6">
-      <div className="max-w-5xl mx-auto space-y-10">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-background/50 p-3 sm:p-6">
+      <div className="max-w-5xl mx-auto space-y-8 sm:space-y-10">
         {/* Welcome Header */}
-        <div className="text-center space-y-6 py-8">
-          <div className="flex justify-center mb-6">
-            <div className="p-4 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20">
+        <div className="text-center space-y-4 sm:space-y-6 py-6 sm:py-8">
+          <div className="flex justify-center mb-4 sm:mb-6">
+            <div className="p-3 sm:p-4 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20">
               <Logo size="md" />
             </div>
           </div>
           
-          <div className="space-y-4">
-            <h1 className="text-5xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent leading-tight">
+          <div className="space-y-3 sm:space-y-4 px-4">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent leading-tight">
               {greeting}, {displayName}!
             </h1>
-            <p className="text-muted-foreground text-xl max-w-2xl mx-auto leading-relaxed">
+            <p className="text-muted-foreground text-lg sm:text-xl max-w-2xl mx-auto leading-relaxed">
               Welcome to your voice-controlled digital assistant
             </p>
           </div>

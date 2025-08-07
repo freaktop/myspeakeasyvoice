@@ -14,16 +14,16 @@ export const BottomNav = () => {
   const navigate = useNavigate();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-card border-t border-border">
-      <div className="flex items-center justify-around py-2">
+    <nav className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-md border-t border-border z-50">
+      <div className="flex items-center justify-around py-2 px-2 sm:px-4">
         {navItems.map(({ path, icon: Icon, label }) => (
           <button
             key={path}
             onClick={() => navigate(path)}
-            className={`nav-tab ${location.pathname === path ? 'active' : ''}`}
+            className={`nav-tab min-w-0 flex-1 max-w-20 ${location.pathname === path ? 'active' : ''}`}
           >
-            <Icon size={20} />
-            <span className="text-xs mt-1">{label}</span>
+            <Icon size={18} className="sm:w-5 sm:h-5" />
+            <span className="text-xs mt-1 truncate">{label}</span>
           </button>
         ))}
       </div>

@@ -86,6 +86,19 @@
     box-shadow: 0 0 50px hsla(270, 100%, 65%, 0.6);
   }
 
+  /* Mobile Responsive Fixes */
+  @media (max-width: 768px) {
+    .mic-button {
+      @apply w-16 h-16;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .mic-button {
+      @apply w-14 h-14;
+    }
+  }
+
   .voice-wave {
     @apply absolute inset-0 rounded-full border-2 opacity-0;
     border-color: hsl(var(--voice-listening));

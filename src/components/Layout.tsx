@@ -12,7 +12,7 @@ const Layout = ({ children }: LayoutProps) => {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-background">
-        <main className="pb-20">
+        <main className="pb-16 sm:pb-20">
           {children || <Outlet />}
         </main>
         <BottomNav />

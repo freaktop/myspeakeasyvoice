@@ -46,7 +46,7 @@ const VoiceContext = createContext<VoiceContextType | undefined>(undefined);
 export const VoiceProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const { profile, updateProfile } = useProfile();
-  const { commands, history, logCommandExecution, addCommand } = useVoiceCommands();
+  const { commands, addCommand } = useVoiceCommands();
   const { toast } = useToast();
   
   const [isListening, setIsListening] = useState(false);

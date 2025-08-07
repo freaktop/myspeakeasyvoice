@@ -1,116 +1,221 @@
 
-import { useVoice } from '@/contexts/VoiceContext';
+import { useProfile } from '@/hooks/useProfile';
+import { useAuth } from '@/contexts/AuthContext';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Slider } from '@/components/ui/slider';
-import { Button } from '@/components/ui/button';
-import { Settings, Mic, Volume2, RotateCcw } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useState } from 'react';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { LogOut, User, Mic, Shield, Bell } from 'lucide-react';
+import { toast } from 'sonner';
 
 const SettingsPage = () => {
-  const { settings, updateSettings } = useVoice();
+  const { user, signOut } = useAuth();
+  const { profile, loading, updateProfile } = useProfile();
+  const [saving, setSaving] = useState(false);
 
-  const handleResetPermissions = () => {
-    console.log('Resetting permissions...');
-    // In a real app, this would reset microphone permissions
+  const handleUpdateProfile = async (updates: any) => {
+    setSaving(true);
+    const { error } = await updateProfile(updates);
+    if (error) {
+      toast.error('Failed to update settings');
+    } else {
+      toast.success('Settings updated successfully');
+    }
+    setSaving(false);
   };
 
-  return (
-    <div className="min-h-screen p-6">
-      <div className="max-w-md mx-auto">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-8">
-          <Settings size={28} className="text-primary" />
-          <h1 className="text-3xl font-bold">Settings</h1>
-        </div>
+  const handleSignOut = async () => {
+    await signOut();
+  };
 
-        <div className="space-y-6">
-          {/* Wake Phrase */}
-          <div className="settings-card">
-            <div className="flex items-center gap-3 mb-4">
-              <Mic size={20} className="text-primary" />
-              <h2 className="text-lg font-semibold">Wake Phrase</h2>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="wake-phrase">Custom wake phrase</Label>
-              <Input
-                id="wake-phrase"
-                value={settings.wakePhrase}
-                onChange={(e) => updateSettings({ wakePhrase: e.target.value })}
-                placeholder="Hey Voice"
-              />
-            </div>
-          </div>
-
-          {/* Voice Feedback */}
-          <div className="settings-card">
-            <div className="flex items-center gap-3 mb-4">
-              <Volume2 size={20} className="text-primary" />
-              <h2 className="text-lg font-semibold">Voice Feedback</h2>
-            </div>
-            <div className="space-y-2">
-              <Label>Voice type</Label>
-              <Select
-                value={settings.voiceFeedback}
-                onValueChange={(value: 'male' | 'female' | 'none') =>
-                  updateSettings({ voiceFeedback: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="female">Female</SelectItem>
-                  <SelectItem value="male">Male</SelectItem>
-                  <SelectItem value="none">None</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Sensitivity */}
-          <div className="settings-card">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                <div className="w-2 h-2 rounded-full bg-white"></div>
-              </div>
-              <h2 className="text-lg font-semibold">Sensitivity</h2>
-            </div>
-            <div className="space-y-4">
-              <div className="flex justify-between">
-                <Label>Microphone sensitivity</Label>
-                <span className="text-primary font-medium">{settings.sensitivity}/10</span>
-              </div>
-              <Slider
-                value={[settings.sensitivity]}
-                onValueChange={([value]) => updateSettings({ sensitivity: value })}
-                max={10}
-                min={1}
-                step={1}
-                className="w-full"
-              />
-              <div className="flex justify-between text-sm text-muted-foreground">
-                <span>Low</span>
-                <span>High</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Reset Permissions */}
-          <div className="settings-card">
-            <div className="flex items-center gap-3 mb-4">
-              <RotateCcw size={20} className="text-primary" />
-              <h2 className="text-lg font-semibold">Reset Permissions</h2>
-            </div>
-            <p className="text-muted-foreground mb-4">
-              Reset microphone and other app permissions to default settings.
-            </p>
-            <Button onClick={handleResetPermissions} variant="outline" className="w-full">
-              Reset All Permissions
-            </Button>
-          </div>
-        </div>
+  if (loading) {
+    return (
+      <div className="p-4 space-y-6">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <Card key={i}>
+            <CardHeader>
+              <Skeleton className="h-6 w-32" />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </CardContent>
+          </Card>
+        ))}
       </div>
+    );
+  }
+
+  return (
+    <div className="p-4 space-y-6">
+      <h1 className="text-2xl font-bold">Settings</h1>
+
+      {/* Profile Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="w-5 h-5" />
+            Profile Settings
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="display-name">Display Name</Label>
+            <Input
+              id="display-name"
+              value={profile?.display_name || ''}
+              onChange={(e) => handleUpdateProfile({ display_name: e.target.value })}
+              placeholder="Enter your display name"
+            />
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              value={user?.email || ''}
+              disabled
+              className="bg-muted"
+            />
+            <p className="text-xs text-muted-foreground">
+              Email cannot be changed from this interface
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="preferred-mode">Preferred Mode</Label>
+            <Select
+              value={profile?.preferred_mode || 'personal'}
+              onValueChange={(value) => handleUpdateProfile({ preferred_mode: value })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select mode" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="personal">Personal</SelectItem>
+                <SelectItem value="professional">Professional</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              This affects which voice commands are available
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Voice Settings */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Mic className="w-5 h-5" />
+            Voice Settings
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="wake-phrase">Wake Phrase</Label>
+            <Input
+              id="wake-phrase"
+              value={profile?.wake_phrase || ''}
+              onChange={(e) => handleUpdateProfile({ wake_phrase: e.target.value })}
+              placeholder="Hey SpeakEasy"
+            />
+            <p className="text-xs text-muted-foreground">
+              The phrase that activates voice commands
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="microphone-sensitivity">
+              Microphone Sensitivity: {Math.round((profile?.microphone_sensitivity || 0.8) * 100)}%
+            </Label>
+            <Slider
+              id="microphone-sensitivity"
+              min={0}
+              max={1}
+              step={0.1}
+              value={[profile?.microphone_sensitivity || 0.8]}
+              onValueChange={([value]) => handleUpdateProfile({ microphone_sensitivity: value })}
+              className="w-full"
+            />
+            <p className="text-xs text-muted-foreground">
+              Higher values make the microphone more sensitive
+            </p>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="voice-feedback">Voice Feedback</Label>
+              <p className="text-xs text-muted-foreground">
+                Get audio confirmation for commands
+              </p>
+            </div>
+            <Switch
+              id="voice-feedback"
+              checked={profile?.voice_feedback_enabled || false}
+              onCheckedChange={(checked) => handleUpdateProfile({ voice_feedback_enabled: checked })}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Privacy & Security */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Shield className="w-5 h-5" />
+            Privacy & Security
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <Button variant="outline" className="w-full" asChild>
+            <a href="/privacy" target="_blank">
+              View Privacy Policy
+            </a>
+          </Button>
+          <Button variant="outline" className="w-full" asChild>
+            <a href="/terms" target="_blank">
+              View Terms of Service
+            </a>
+          </Button>
+        </CardContent>
+      </Card>
+
+      {/* Account Actions */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Account</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" className="w-full text-red-600 hover:text-red-700">
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Sign Out</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Are you sure you want to sign out? You'll need to sign in again to access your voice commands.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleSignOut}>Sign Out</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </CardContent>
+      </Card>
     </div>
   );
 };

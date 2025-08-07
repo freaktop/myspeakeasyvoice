@@ -15,30 +15,16 @@ export interface VoiceCommand {
   updated_at: string;
 }
 
-export interface CommandHistory {
-  id: string;
-  user_id: string;
-  command_text: string;
-  action_performed: string;
-  context_mode: string | null;
-  success: boolean;
-  response_time_ms: number | null;
-  created_at: string;
-}
-
 export const useVoiceCommands = () => {
   const { user } = useAuth();
   const [commands, setCommands] = useState<VoiceCommand[]>([]);
-  const [history, setHistory] = useState<CommandHistory[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (user) {
       fetchCommands();
-      fetchHistory();
     } else {
       setCommands([]);
-      setHistory([]);
       setLoading(false);
     }
   }, [user]);
@@ -51,38 +37,17 @@ export const useVoiceCommands = () => {
         .from('voice_commands')
         .select('*')
         .eq('user_id', user.id)
-        .order('created_at', { ascending: false });
+        .eq('is_active', true)
+        .order('usage_count', { ascending: false });
 
       if (error) {
         console.error('Error fetching commands:', error);
         return;
       }
 
-      setCommands((data as VoiceCommand[]) || []);
+      setCommands(data as VoiceCommand[]);
     } catch (error) {
       console.error('Error fetching commands:', error);
-    }
-  };
-
-  const fetchHistory = async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('command_history')
-        .select('*')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(50);
-
-      if (error) {
-        console.error('Error fetching history:', error);
-        return;
-      }
-
-      setHistory(data || []);
-    } catch (error) {
-      console.error('Error fetching history:', error);
     } finally {
       setLoading(false);
     }
@@ -111,40 +76,6 @@ export const useVoiceCommands = () => {
     } catch (error) {
       console.error('Error adding command:', error);
       return { error: error as Error };
-    }
-  };
-
-  const logCommandExecution = async (
-    commandText: string,
-    actionPerformed: string,
-    contextMode?: string,
-    success: boolean = true,
-    responseTimeMs?: number
-  ) => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('command_history')
-        .insert({
-          user_id: user.id,
-          command_text: commandText,
-          action_performed: actionPerformed,
-          context_mode: contextMode,
-          success,
-          response_time_ms: responseTimeMs,
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error logging command:', error);
-        return;
-      }
-
-      setHistory(prev => [data, ...prev.slice(0, 49)]);
-    } catch (error) {
-      console.error('Error logging command:', error);
     }
   };
 
@@ -196,17 +127,34 @@ export const useVoiceCommands = () => {
     }
   };
 
+  const incrementUsage = async (id: string) => {
+    if (!user) return;
+
+    try {
+      const command = commands.find(cmd => cmd.id === id);
+      if (!command) return;
+
+      await supabase
+        .from('voice_commands')
+        .update({ usage_count: command.usage_count + 1 })
+        .eq('id', id)
+        .eq('user_id', user.id);
+
+      setCommands(prev => prev.map(cmd => 
+        cmd.id === id ? { ...cmd, usage_count: cmd.usage_count + 1 } : cmd
+      ));
+    } catch (error) {
+      console.error('Error incrementing usage:', error);
+    }
+  };
+
   return {
     commands,
-    history,
     loading,
     addCommand,
     updateCommand,
     deleteCommand,
-    logCommandExecution,
-    refetch: () => {
-      fetchCommands();
-      fetchHistory();
-    },
+    incrementUsage,
+    refetch: fetchCommands,
   };
 };

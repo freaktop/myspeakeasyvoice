@@ -1,72 +1,130 @@
 
-import { useVoice } from '@/contexts/VoiceContext';
-import { Card, CardContent } from '@/components/ui/card';
-import { History, Clock, CheckCircle, Mic } from 'lucide-react';
-import { format } from 'date-fns';
+import { useCommandHistory } from '@/hooks/useCommandHistory';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Trash2, RefreshCw, Clock, CheckCircle, XCircle } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 const CommandLogPage = () => {
-  const { commandHistory } = useVoice();
+  const { history, loading, clearHistory, refetch } = useCommandHistory();
+
+  const handleClearHistory = async () => {
+    const { error } = await clearHistory();
+    if (error) {
+      console.error('Failed to clear history:', error);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="p-4 space-y-4">
+        <div className="flex justify-between items-center">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-10 w-24" />
+        </div>
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Card key={i}>
+            <CardContent className="p-4">
+              <Skeleton className="h-4 w-full mb-2" />
+              <Skeleton className="h-4 w-3/4 mb-2" />
+              <Skeleton className="h-4 w-1/2" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen p-6">
-      <div className="max-w-md mx-auto">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-8">
-          <History size={28} className="text-primary" />
-          <h1 className="text-3xl font-bold">Command History</h1>
-        </div>
-
-        {/* Command List */}
-        <div className="space-y-4">
-          {commandHistory.length === 0 ? (
-            <Card className="bg-card border-border">
-              <CardContent className="py-12 text-center">
-                <Mic size={48} className="text-muted-foreground mx-auto mb-4" />
-                <p className="text-muted-foreground">No commands yet</p>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Start using voice commands to see them here
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            commandHistory.map((command) => (
-              <Card key={command.id} className="bg-card border-border">
-                <CardContent className="p-4">
-                  <div className="flex items-start gap-3">
-                    <div className="p-2 rounded-full bg-voice-success/20">
-                      <CheckCircle size={16} className="text-voice-success" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm text-muted-foreground">Command:</span>
-                      </div>
-                      <p className="font-medium mb-2">"{command.command}"</p>
-                      
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-sm text-muted-foreground">Action:</span>
-                      </div>
-                      <p className="text-sm text-voice-success mb-3">{command.action}</p>
-
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <Clock size={12} />
-                        <span>{format(command.timestamp, 'MMM d, h:mm a')}</span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
+    <div className="p-4 space-y-4">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Command History</h1>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={refetch}>
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Refresh
+          </Button>
+          {history.length > 0 && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm">
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  Clear All
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Clear Command History</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete all your command history. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleClearHistory}>Clear All</AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           )}
         </div>
-
-        {commandHistory.length > 0 && (
-          <div className="mt-8 text-center">
-            <p className="text-sm text-muted-foreground">
-              {commandHistory.length} command{commandHistory.length !== 1 ? 's' : ''} total
-            </p>
-          </div>
-        )}
       </div>
+
+      {history.length === 0 ? (
+        <Card>
+          <CardContent className="p-8 text-center">
+            <Clock className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+            <h3 className="text-lg font-semibold mb-2">No Commands Yet</h3>
+            <p className="text-muted-foreground">
+              Your voice command history will appear here once you start using voice commands.
+            </p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-3">
+          {history.map((entry) => (
+            <Card key={entry.id}>
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-2">
+                      {entry.success ? (
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                      ) : (
+                        <XCircle className="w-4 h-4 text-red-500" />
+                      )}
+                      <span className="font-medium">"{entry.command_text}"</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      Action: {entry.action_performed}
+                    </p>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Clock className="w-3 h-3" />
+                      {formatDistanceToNow(new Date(entry.created_at), { addSuffix: true })}
+                      {entry.response_time_ms && (
+                        <>
+                          <span>•</span>
+                          <span>{entry.response_time_ms}ms</span>
+                        </>
+                      )}
+                      {entry.context_mode && (
+                        <>
+                          <span>•</span>
+                          <Badge variant="secondary" className="text-xs">
+                            {entry.context_mode}
+                          </Badge>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

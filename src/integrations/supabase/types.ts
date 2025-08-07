@@ -54,6 +54,7 @@ export type Database = {
           id: string
           microphone_sensitivity: number | null
           preferred_mode: string | null
+          role: Database["public"]["Enums"]["app_role"]
           updated_at: string
           user_id: string
           voice_feedback_enabled: boolean | null
@@ -65,6 +66,7 @@ export type Database = {
           id?: string
           microphone_sensitivity?: number | null
           preferred_mode?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
           user_id: string
           voice_feedback_enabled?: boolean | null
@@ -76,10 +78,35 @@ export type Database = {
           id?: string
           microphone_sensitivity?: number | null
           preferred_mode?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
           updated_at?: string
           user_id?: string
           voice_feedback_enabled?: boolean | null
           wake_phrase?: string | null
+        }
+        Relationships: []
+      }
+      voice_command_rate_limit: {
+        Row: {
+          command_count: number
+          created_at: string
+          id: string
+          user_id: string
+          window_start: string
+        }
+        Insert: {
+          command_count?: number
+          created_at?: string
+          id?: string
+          user_id: string
+          window_start?: string
+        }
+        Update: {
+          command_count?: number
+          created_at?: string
+          id?: string
+          user_id?: string
+          window_start?: string
         }
         Relationships: []
       }
@@ -122,15 +149,56 @@ export type Database = {
         }
         Relationships: []
       }
+      waitlist: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          name: string | null
+          source: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          name?: string | null
+          source?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          name?: string | null
+          source?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_voice_command_rate_limit: {
+        Args: {
+          _user_id: string
+          _max_commands?: number
+          _window_minutes?: number
+        }
+        Returns: boolean
+      }
+      has_role: {
+        Args: {
+          _user_id: string
+          _role: Database["public"]["Enums"]["app_role"]
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -257,6 +325,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const

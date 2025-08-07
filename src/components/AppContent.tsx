@@ -9,6 +9,9 @@ import SettingsPage from '@/pages/SettingsPage';
 import RoutinesPage from '@/pages/RoutinesPage';
 import CommandLogPage from '@/pages/CommandLogPage';
 import AuthPage from '@/pages/AuthPage';
+import PrivacyPolicyPage from '@/pages/PrivacyPolicyPage';
+import TermsPage from '@/pages/TermsPage';
+import VoiceTrainingPage from '@/components/VoiceTrainingPage';
 
 const AppContent = () => {
   const { user, loading } = useAuth();
@@ -69,6 +72,9 @@ const AppContent = () => {
       {location.pathname === '/settings' && <Layout><SettingsPage /></Layout>}
       {location.pathname === '/routines' && <Layout><RoutinesPage /></Layout>}
       {location.pathname === '/commands' && <Layout><CommandLogPage /></Layout>}
+      {location.pathname === '/voice-training' && <Layout><VoiceTrainingPage /></Layout>}
+      {location.pathname === '/privacy' && <PrivacyPolicyPage />}
+      {location.pathname === '/terms' && <TermsPage />}
     </>
   );
 };

@@ -175,8 +175,12 @@
 }
 
 @keyframes listening-bars {
-  0%, 100% { height: 20px; }
-  50% { height: 40px; }
+  0%, 100% { 
+    transform: scaleY(1);
+  }
+  50% { 
+    transform: scaleY(2);
+  }
 }
 
 @keyframes fade-in {

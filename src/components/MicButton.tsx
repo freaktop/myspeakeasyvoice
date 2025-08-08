@@ -18,17 +18,17 @@ export const MicButton = () => {
       {/* Outer glow rings */}
       {isListening && (
         <>
-          <div className="absolute inset-0 rounded-full bg-gradient-primary opacity-30 animate-pulse scale-150"></div>
-          <div className="absolute inset-0 rounded-full bg-gradient-primary opacity-20 animate-ping scale-125"></div>
+          <div className="absolute inset-0 rounded-full opacity-30 animate-pulse scale-150" style={{ background: 'var(--gradient-primary)' }}></div>
+          <div className="absolute inset-0 rounded-full opacity-20 animate-ping scale-125" style={{ background: 'var(--gradient-primary)' }}></div>
         </>
       )}
       
       {/* Main mic button */}
       <button
         onClick={handleClick}
-        className={`mic-button ${isListening ? 'listening' : ''} relative rounded-full border-2 transition-all duration-300 ${
+        className={`mic-button ${isListening ? 'listening' : ''} relative rounded-full border-2 transition-all duration-300 p-6 ${
           isListening 
-            ? 'border-voice-listening shadow-2xl' 
+            ? 'border-primary shadow-2xl' 
             : 'border-primary/50 hover:border-primary'
         }`}
       >
@@ -54,9 +54,9 @@ export const MicButton = () => {
         
         {/* Mic icon */}
         {isListening ? (
-          <MicOff size={32} className="text-primary-foreground relative z-10" />
+          <MicOff size={32} className="text-black relative z-10" />
         ) : (
-          <Mic size={32} className="text-primary-foreground relative z-10" />
+          <Mic size={32} className="text-black relative z-10" />
         )}
       </button>
       
@@ -67,9 +67,10 @@ export const MicButton = () => {
             {[...Array(3)].map((_, i) => (
               <div
                 key={`left-${i}`}
-                className="w-1 bg-primary rounded-full listening-bar"
+                className="w-1 bg-primary rounded-full"
                 style={{ 
                   height: `${12 + i * 8}px`,
+                  animation: `listening-bars 1s ease-in-out infinite`,
                   animationDelay: `${i * 0.1}s` 
                 }}
               />
@@ -79,9 +80,10 @@ export const MicButton = () => {
             {[...Array(3)].map((_, i) => (
               <div
                 key={`right-${i}`}
-                className="w-1 bg-primary rounded-full listening-bar"
+                className="w-1 bg-primary rounded-full"
                 style={{ 
                   height: `${12 + (2 - i) * 8}px`,
+                  animation: `listening-bars 1s ease-in-out infinite`,
                   animationDelay: `${i * 0.1 + 0.15}s` 
                 }}
               />

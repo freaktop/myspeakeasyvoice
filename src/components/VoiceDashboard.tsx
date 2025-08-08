@@ -14,7 +14,7 @@ import { useNavigate } from 'react-router-dom';
 export const VoiceDashboard = () => {
   const { user } = useAuth();
   const { profile } = useProfile();
-  const { history, isNativeMode, backgroundListening, isListening, startListening } = useVoice();
+  const { commandHistory, isNativeMode, backgroundListening, isListening, startListening } = useVoice();
   const navigate = useNavigate();
   const [greeting, setGreeting] = useState('');
 
@@ -35,9 +35,9 @@ export const VoiceDashboard = () => {
   }, []);
 
   const displayName = profile?.display_name || user?.email?.split('@')[0] || 'there';
-  const totalCommands = history.length;
-  const todayCommands = history.filter(cmd => 
-    new Date(cmd.created_at).toDateString() === new Date().toDateString()
+  const totalCommands = commandHistory.length;
+  const todayCommands = commandHistory.filter(cmd => 
+    new Date(cmd.timestamp).toDateString() === new Date().toDateString()
   ).length;
 
   const quickActions = [

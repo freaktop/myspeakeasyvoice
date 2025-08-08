@@ -183,40 +183,50 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
       
       toast({
         title: "Voice Assistant Active",
-        description: "Say 'Hey SpeakEasy' followed by your command",
+        description: "Always listening for 'Hey SpeakEasy'",
       });
     } else {
-      // Web simulation with actual voice recognition for testing
+      // Web continuous voice recognition
       setIsListening(true);
       
-      // Try to use Web Speech API for testing
+      // Try to use Web Speech API for continuous listening
       if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
         const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
         const recognition = new SpeechRecognition();
         
-        recognition.continuous = false;
-        recognition.interimResults = false;
+        recognition.continuous = true;  // Enable continuous listening
+        recognition.interimResults = true;
         recognition.lang = 'en-US';
         
         recognition.onresult = (event: any) => {
-          const transcript = event.results[0][0].transcript.trim();
+          const transcript = event.results[event.results.length - 1][0].transcript.trim();
           console.log('Web speech recognition result:', transcript);
-          handleVoiceCommand(transcript);
-          setIsListening(false);
+          
+          // Check for wake phrase before processing command
+          const lowerTranscript = transcript.toLowerCase();
+          if (lowerTranscript.includes('hey speakeasy') || lowerTranscript.includes('hey speak easy')) {
+            console.log('Wake phrase detected:', transcript);
+            handleVoiceCommand(transcript);
+          }
         };
         
         recognition.onerror = (event: any) => {
           console.error('Speech recognition error:', event.error);
-          setIsListening(false);
-          toast({
-            title: "Voice Recognition Error",
-            description: "Please check microphone permissions",
-            variant: "destructive"
-          });
+          // Auto-restart on error to maintain continuous listening
+          setTimeout(() => {
+            if (isListening) {
+              recognition.start();
+            }
+          }, 1000);
         };
         
         recognition.onend = () => {
-          setIsListening(false);
+          // Auto-restart to maintain continuous listening
+          if (isListening) {
+            setTimeout(() => {
+              recognition.start();
+            }, 100);
+          }
         };
         
         recognition.start();

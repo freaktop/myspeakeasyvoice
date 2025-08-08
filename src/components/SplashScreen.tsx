@@ -87,7 +87,7 @@ export const SplashScreen = ({ onComplete }: SplashScreenProps) => {
               
               {/* Logo content */}
               <div className="relative z-10 w-full h-full flex items-center justify-center">
-                <Logo size="lg" showText={false} />
+                <Logo size="xl" showText={false} animated={true} />
               </div>
             </div>
           </div>

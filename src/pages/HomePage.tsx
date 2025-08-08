@@ -61,8 +61,11 @@ const HomePage = () => {
         {/* Header */}
         <div className="text-center mb-8 sm:mb-12">
           <div className="flex justify-center mb-4 sm:mb-6">
-            <div className="p-3 sm:p-4 rounded-2xl bg-gradient-to-br from-primary/10 to-accent/10 border border-primary/20">
-              <Logo size="lg" />
+            <div className="p-3 sm:p-4 rounded-2xl relative overflow-hidden" style={{ background: 'var(--gradient-card)' }}>
+              <div className="absolute inset-0 opacity-20" style={{ background: 'var(--gradient-primary)' }}></div>
+              <div className="relative z-10">
+                <Logo size="lg" animated={true} />
+              </div>
             </div>
           </div>
           <p className="text-muted-foreground text-lg sm:text-xl mb-6 sm:mb-8 max-w-2xl mx-auto leading-relaxed px-4">

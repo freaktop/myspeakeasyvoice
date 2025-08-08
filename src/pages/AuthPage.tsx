@@ -77,7 +77,7 @@ const AuthPage = () => {
             <div className="relative">
               <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20 rounded-full blur-2xl scale-150"></div>
               <div className="relative">
-                <Logo size="lg" />
+                <Logo size="lg" animated={true} />
               </div>
             </div>
           </div>

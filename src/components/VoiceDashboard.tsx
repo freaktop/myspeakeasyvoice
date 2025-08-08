@@ -136,7 +136,7 @@ export const VoiceDashboard = () => {
                     <div className="w-full h-full rounded-3xl bg-background/90"></div>
                   </div>
                   <div className="relative z-10">
-                    <Logo size="lg" showText={false} />
+                    <Logo size="lg" showText={false} animated={true} />
                   </div>
                 </div>
               </div>

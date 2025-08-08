@@ -22,16 +22,23 @@ const AppContent = () => {
 
   // Show splash screen on initial load
   useEffect(() => {
+    console.log('AppContent loading state:', { loading, user: !!user, pathname: location.pathname });
+    
     if (!loading) {
       // Show splash for 3 seconds, then proceed
       const timer = setTimeout(() => {
+        console.log('Splash screen complete, proceeding...');
         setShowSplash(false);
         
         // If user is logged in and on home route, show welcome dashboard
         if (user && location.pathname === '/') {
+          console.log('Showing welcome dashboard');
           setShowWelcome(true);
           // Auto-hide welcome after 5 seconds
-          setTimeout(() => setShowWelcome(false), 5000);
+          setTimeout(() => {
+            console.log('Hiding welcome dashboard');
+            setShowWelcome(false);
+          }, 5000);
         }
       }, 3000);
 
@@ -52,26 +59,31 @@ const AppContent = () => {
 
   // Show splash screen
   if (showSplash || loading) {
+    console.log('Showing splash screen:', { showSplash, loading });
     return <SplashScreen onComplete={() => setShowSplash(false)} />;
   }
 
   // Show auth page if not authenticated
   if (!user) {
+    console.log('Showing auth page - no user');
     return <AuthPage />;
   }
 
   // Show welcome dashboard on first visit to home
   if (showWelcome && location.pathname === '/') {
+    console.log('Showing welcome dashboard');
     return <WelcomeDashboard />;
   }
 
   // Show main app content
+  console.log('Showing main app content for route:', location.pathname);
   return (
     <>
       {location.pathname === '/' && <Layout><HomePage /></Layout>}
       {location.pathname === '/settings' && <Layout><SettingsPage /></Layout>}
       {location.pathname === '/routines' && <Layout><RoutinesPage /></Layout>}
       {location.pathname === '/commands' && <Layout><CommandLogPage /></Layout>}
+      {location.pathname === '/command-log' && <Layout><CommandLogPage /></Layout>}
       {location.pathname === '/voice-training' && <Layout><VoiceTrainingPage /></Layout>}
       {location.pathname === '/privacy' && <PrivacyPolicyPage />}
       {location.pathname === '/terms' && <TermsPage />}

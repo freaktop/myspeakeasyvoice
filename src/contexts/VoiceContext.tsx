@@ -85,9 +85,7 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
 
   // Initialize background voice service for continuous listening
   useEffect(() => {
-        console.log('VoiceProvider initialized:', { isNativeMode, user: !!user });
         // Don't auto-enable continuous listening to prevent errors
-        console.log('Voice provider initialized without auto-listening');
   }, [isNativeMode]);
 
   const handleVoiceCommand = async (command: string) => {

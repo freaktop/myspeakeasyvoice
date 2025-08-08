@@ -32,7 +32,7 @@ export const VoiceDashboard = () => {
         startListening();
       }, 1000);
     }
-  }, []);
+  }, [startListening]);
 
   const displayName = profile?.display_name || user?.email?.split('@')[0] || 'there';
   const totalCommands = commandHistory.length;

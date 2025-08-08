@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 import { useAuth } from './AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useVoiceCommands } from '@/hooks/useVoiceCommands';
+import { useCommandHistory } from '@/hooks/useCommandHistory';
 import { nativeVoiceCommands, SystemCommand } from '@/utils/NativeVoiceCommands';
 import { backgroundVoiceService } from '@/utils/BackgroundVoiceService';
 import { Capacitor } from '@capacitor/core';
@@ -47,6 +48,7 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
   const { user } = useAuth();
   const { profile, updateProfile } = useProfile();
   const { commands, addCommand } = useVoiceCommands();
+  const { history, addHistoryEntry } = useCommandHistory();
   const { toast } = useToast();
   
   const [isListening, setIsListening] = useState(false);
@@ -117,13 +119,13 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
       if (user) {
         // Log system command execution with proper response time
         const responseTime = Math.floor(Math.random() * 500) + 50; // 50-550ms
-        await logCommandExecution(
-          command,
-          `System: ${systemCommand.type}`,
-          currentMode,
+        await addHistoryEntry({
+          command_text: command,
+          action_performed: `System: ${systemCommand.type}`,
+          context_mode: currentMode,
           success,
-          responseTime
-        );
+          response_time_ms: responseTime
+        });
       }
       
       return success;
@@ -158,13 +160,13 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
     
     // Log to database if user is authenticated
     if (user) {
-      await logCommandExecution(
-        command,
-        selectedCommand.action,
-        currentMode,
-        true,
-        Math.floor(Math.random() * 500) + 200
-      );
+      await addHistoryEntry({
+        command_text: command,
+        action_performed: selectedCommand.action,
+        context_mode: currentMode,
+        success: true,
+        response_time_ms: Math.floor(Math.random() * 500) + 200
+      });
     }
 
     toast({

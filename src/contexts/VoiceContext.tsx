@@ -201,10 +201,9 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
           const transcript = event.results[event.results.length - 1][0].transcript.trim();
           console.log('Web speech recognition result:', transcript);
           
-          // Check for wake phrase before processing command
-          const lowerTranscript = transcript.toLowerCase();
-          if (lowerTranscript.includes('hey speakeasy') || lowerTranscript.includes('hey speak easy')) {
-            console.log('Wake phrase detected:', transcript);
+          // Process all commands when actively listening (not just wake phrase)
+          if (isListening) {
+            console.log('Processing voice command:', transcript);
             handleVoiceCommand(transcript);
           }
         };

@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_integrations: {
+        Row: {
+          app_name: string
+          created_at: string
+          credentials: Json | null
+          id: string
+          integration_type: string
+          is_active: boolean | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          app_name: string
+          created_at?: string
+          credentials?: Json | null
+          id?: string
+          integration_type: string
+          is_active?: boolean | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          app_name?: string
+          created_at?: string
+          credentials?: Json | null
+          id?: string
+          integration_type?: string
+          is_active?: boolean | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       command_history: {
         Row: {
           action_performed: string
@@ -86,6 +119,36 @@ export type Database = {
         }
         Relationships: []
       }
+      user_activity: {
+        Row: {
+          activity_data: Json | null
+          activity_type: string
+          created_at: string
+          id: string
+          ip_address: unknown | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          activity_data?: Json | null
+          activity_type: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          activity_data?: Json | null
+          activity_type?: string
+          created_at?: string
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       voice_command_rate_limit: {
         Row: {
           command_count: number
@@ -146,6 +209,45 @@ export type Database = {
           updated_at?: string
           usage_count?: number | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      voice_settings: {
+        Row: {
+          continuous_listening: boolean | null
+          created_at: string
+          id: string
+          language: string | null
+          offline_mode: boolean | null
+          updated_at: string
+          user_id: string
+          voice_feedback: boolean | null
+          voice_sensitivity: number | null
+          wake_word: string | null
+        }
+        Insert: {
+          continuous_listening?: boolean | null
+          created_at?: string
+          id?: string
+          language?: string | null
+          offline_mode?: boolean | null
+          updated_at?: string
+          user_id: string
+          voice_feedback?: boolean | null
+          voice_sensitivity?: number | null
+          wake_word?: string | null
+        }
+        Update: {
+          continuous_listening?: boolean | null
+          created_at?: string
+          id?: string
+          language?: string | null
+          offline_mode?: boolean | null
+          updated_at?: string
+          user_id?: string
+          voice_feedback?: boolean | null
+          voice_sensitivity?: number | null
+          wake_word?: string | null
         }
         Relationships: []
       }

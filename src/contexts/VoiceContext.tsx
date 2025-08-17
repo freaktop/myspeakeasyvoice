@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import React, { createContext, useContext, useState, ReactNode, useEffect, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useVoiceCommands } from '@/hooks/useVoiceCommands';
@@ -57,7 +57,7 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
   const [backgroundListening, setBackgroundListening] = useState(false);
   const [isNativeMode] = useState(Capacitor.isNativePlatform());
   const [voiceFeedback, setVoiceFeedback] = useState<'male' | 'female' | 'none'>('male');
-  
+  const isListeningRef = useRef(false);
   // Convert database history to local format
   const commandHistory: CommandHistoryItem[] = history.map(item => ({
     id: item.id,
@@ -179,6 +179,7 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
       // For native platforms, use continuous background listening
       backgroundVoiceService.startListening();
       setIsListening(true);
+      isListeningRef.current = true;
       
       toast({
         title: "Voice Assistant Active",
@@ -187,6 +188,7 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
     } else {
       // Web continuous voice recognition
       setIsListening(true);
+      isListeningRef.current = true;
       
       // Try to use Web Speech API for continuous listening
       if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -202,7 +204,7 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
           console.log('Web speech recognition result:', transcript);
           
           // Process all commands when actively listening (not just wake phrase)
-          if (isListening) {
+          if (isListeningRef.current) {
             console.log('Processing voice command:', transcript);
             handleVoiceCommand(transcript);
           }
@@ -212,7 +214,7 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
           console.error('Speech recognition error:', event.error);
           // Auto-restart on error to maintain continuous listening
           setTimeout(() => {
-            if (isListening) {
+            if (isListeningRef.current) {
               recognition.start();
             }
           }, 1000);
@@ -220,7 +222,7 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
         
         recognition.onend = () => {
           // Auto-restart to maintain continuous listening
-          if (isListening) {
+          if (isListeningRef.current) {
             setTimeout(() => {
               recognition.start();
             }, 100);
@@ -259,6 +261,7 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
 
   const stopListening = () => {
     setIsListening(false);
+    isListeningRef.current = false;
     if (isNativeMode) {
       backgroundVoiceService.stopListening();
     }

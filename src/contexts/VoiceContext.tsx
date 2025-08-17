@@ -58,6 +58,8 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
   const [isNativeMode] = useState(Capacitor.isNativePlatform());
   const [voiceFeedback, setVoiceFeedback] = useState<'male' | 'female' | 'none'>('male');
   const isListeningRef = useRef(false);
+  const recognitionRef = useRef<any | null>(null);
+  const recognitionActiveRef = useRef(false);
   // Convert database history to local format
   const commandHistory: CommandHistoryItem[] = history.map(item => ({
     id: item.id,
@@ -112,11 +114,47 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
     console.log('Parsed system command:', systemCommand);
     
     if (systemCommand) {
-      const success = await nativeVoiceCommands.executeCommand(systemCommand);
+      let success = false;
+
+      if (isNativeMode) {
+        success = await nativeVoiceCommands.executeCommand(systemCommand);
+      } else {
+        // Web fallback: handle a safe subset of commands
+        try {
+          switch (systemCommand.type) {
+            case 'scroll': {
+              const amount = Math.round(window.innerHeight * 0.7);
+              const dir = (systemCommand.direction || 'down').toLowerCase();
+              const top = dir === 'up' ? -amount : dir === 'down' ? amount : 0;
+              const left = dir === 'left' ? -amount : dir === 'right' ? amount : 0;
+              window.scrollBy({ top, left, behavior: 'smooth' });
+              success = true;
+              break;
+            }
+            case 'navigate': {
+              const action = (systemCommand.action || '').toLowerCase();
+              if (action.includes('back')) {
+                window.history.back();
+                success = true;
+              } else if (action.includes('home')) {
+                window.location.assign('/');
+                success = true;
+              }
+              break;
+            }
+            default:
+              // Not supported on web: open_app, system volume, click at coordinates, etc.
+              success = false;
+          }
+        } catch (e) {
+          console.error('Web command execution failed:', e);
+          success = false;
+        }
+      }
+
       console.log('System command execution result:', success);
       
       if (user) {
-        // Log system command execution with proper response time
         const responseTime = Math.floor(Math.random() * 500) + 50; // 50-550ms
         await addHistoryEntry({
           command_text: command,
@@ -186,76 +224,127 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
         description: "Always listening for 'Hey SpeakEasy'",
       });
     } else {
-      // Web continuous voice recognition
-      setIsListening(true);
-      isListeningRef.current = true;
-      
-      // Try to use Web Speech API for continuous listening
-      if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-        const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
-        const recognition = new SpeechRecognition();
-        
-        recognition.continuous = true;  // Enable continuous listening
-        recognition.interimResults = true;
-        recognition.lang = 'en-US';
-        
-        recognition.onresult = (event: any) => {
-          const transcript = event.results[event.results.length - 1][0].transcript.trim();
-          console.log('Web speech recognition result:', transcript);
-          
-          // Process all commands when actively listening (not just wake phrase)
-          if (isListeningRef.current) {
-            console.log('Processing voice command:', transcript);
-            handleVoiceCommand(transcript);
+      // Web: request mic permission first, then start/reuse recognition safely
+      (async () => {
+        try {
+          if (navigator.mediaDevices?.getUserMedia) {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            stream.getTracks().forEach(t => t.stop());
           }
-        };
-        
-        recognition.onerror = (event: any) => {
-          console.error('Speech recognition error:', event.error);
-          // Auto-restart on error to maintain continuous listening
-          setTimeout(() => {
-            if (isListeningRef.current) {
-              recognition.start();
-            }
-          }, 1000);
-        };
-        
-        recognition.onend = () => {
-          // Auto-restart to maintain continuous listening
-          if (isListeningRef.current) {
-            setTimeout(() => {
-              recognition.start();
-            }, 100);
-          }
-        };
-        
-        recognition.start();
-        
-        toast({
-          title: "Listening...",
-          description: "Try saying 'open camera' or 'scroll down'",
-        });
-      } else {
-        // Fallback simulation
-        setTimeout(() => {
-          const testCommands = [
-            'open camera',
-            'scroll down',
-            'volume up',
-            'go back',
-            'send hello to john'
-          ];
-          
-          const randomCommand = testCommands[Math.floor(Math.random() * testCommands.length)];
-          handleVoiceCommand(randomCommand);
+        } catch (err) {
+          console.error('Microphone permission denied:', err);
           setIsListening(false);
-        }, 2000);
+          isListeningRef.current = false;
+          toast({
+            title: "Microphone blocked",
+            description: "Allow mic access to use voice commands",
+            variant: "destructive"
+          });
+          return;
+        }
+
+        setIsListening(true);
+        isListeningRef.current = true;
         
-        toast({
-          title: "Simulated Voice Command",
-          description: "Testing with random system command",
-        });
-      }
+        // Try to use Web Speech API for continuous listening
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+          const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+
+          // Create or reuse a single recognition instance
+          if (!recognitionRef.current) {
+            const recognition = new SpeechRecognition();
+            
+            recognition.continuous = true;  // Enable continuous listening
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+
+            recognition.onstart = () => {
+              recognitionActiveRef.current = true;
+              console.log('Web speech recognition started');
+            };
+            
+            recognition.onresult = (event: any) => {
+              const transcript = event.results[event.results.length - 1][0].transcript.trim();
+              console.log('Web speech recognition result:', transcript);
+              
+              // Process all commands when actively listening (not just wake phrase)
+              if (isListeningRef.current) {
+                handleVoiceCommand(transcript);
+              }
+            };
+            
+            recognition.onerror = (event: any) => {
+              console.error('Speech recognition error:', event.error);
+              recognitionActiveRef.current = false;
+
+              if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+                // Do not auto-restart; require user to allow mic
+                setIsListening(false);
+                isListeningRef.current = false;
+                toast({
+                  title: "Microphone blocked",
+                  description: "Enable mic permissions and try again",
+                  variant: "destructive"
+                });
+                return;
+              }
+              // Auto-restart on error to maintain continuous listening
+              setTimeout(() => {
+                if (isListeningRef.current && !recognitionActiveRef.current) {
+                  try { recognition.start(); } catch { /* already started */ }
+                }
+              }, 800);
+            };
+            
+            recognition.onend = () => {
+              recognitionActiveRef.current = false;
+              // Auto-restart to maintain continuous listening
+              if (isListeningRef.current) {
+                setTimeout(() => {
+                  try { recognition.start(); } catch { /* already started */ }
+                }, 120);
+              }
+            };
+            
+            recognitionRef.current = recognition;
+          }
+          
+          // Start only if not already running
+          if (!recognitionActiveRef.current) {
+            try {
+              recognitionRef.current.start();
+            } catch (e: any) {
+              if (String(e?.message || e).includes('already started')) {
+                console.debug('Recognition already running');
+              } else {
+                console.error('Failed to start recognition:', e);
+              }
+            }
+          }
+          
+          toast({
+            title: "Listening...",
+            description: "Try saying 'scroll down' or 'go back'",
+          });
+        } else {
+          // Fallback simulation
+          setTimeout(() => {
+            const testCommands = [
+              'scroll down',
+              'go back',
+              'scroll up'
+            ];
+            
+            const randomCommand = testCommands[Math.floor(Math.random() * testCommands.length)];
+            handleVoiceCommand(randomCommand);
+          }, 1200);
+          
+          toast({
+            title: "Simulated Voice Command",
+            description: "Testing with a random command",
+          });
+        }
+      })();
     }
   };
 
@@ -264,6 +353,9 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
     isListeningRef.current = false;
     if (isNativeMode) {
       backgroundVoiceService.stopListening();
+    } else {
+      recognitionActiveRef.current = false;
+      try { recognitionRef.current?.stop(); } catch { /* ignore */ }
     }
   };
 

@@ -295,11 +295,18 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
             };
             
             recognition.onresult = (event: any) => {
-              const transcript = event.results[event.results.length - 1][0].transcript.trim();
-              console.log('Web speech recognition result:', transcript);
-              
-              // Process all commands when actively listening (not just wake phrase)
-              if (isListeningRef.current) {
+              let finalTranscript = '';
+              for (let i = event.resultIndex; i < event.results.length; i++) {
+                if (event.results[i].isFinal) {
+                  finalTranscript += event.results[i][0].transcript;
+                }
+              }
+              const transcript = finalTranscript.trim();
+              if (transcript) {
+                console.log('Web speech recognition final result:', transcript);
+              }
+              // Only process final results to avoid partial triggers
+              if (transcript && isListeningRef.current) {
                 handleVoiceCommand(transcript);
               }
             };

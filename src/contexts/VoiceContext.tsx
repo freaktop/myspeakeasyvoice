@@ -94,7 +94,10 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
     console.log('Voice command received:', command);
     setLastCommand(command);
     
-    // Try to execute as system command first
+    // Detect if this is a system command first
+    const parsed = nativeVoiceCommands.parseVoiceCommand(command);
+
+    // Try to execute as system command when applicable
     const executed = await executeSystemCommand(command);
     
     if (executed) {
@@ -102,10 +105,21 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
         title: "Command Executed",
         description: `System command: ${command}`,
       });
-    } else {
-      // Fall back to regular voice command processing
-      await processRegularCommand(command);
+      return;
     }
+
+    // If it looked like a system command but couldn't run (e.g., unsupported on web), don't fallback silently
+    if (parsed) {
+      toast({
+        title: "Not available here",
+        description: "That system command requires the mobile app or extra permissions.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Fall back to regular voice command processing
+    await processRegularCommand(command);
   };
 
   const executeSystemCommand = async (command: string): Promise<boolean> => {
@@ -142,8 +156,25 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
               }
               break;
             }
+            case 'open_app': {
+              const target = (systemCommand.target || '').toLowerCase();
+              if (['settings', 'setting'].includes(target)) {
+                window.location.assign('/settings');
+                success = true;
+              } else if (['home', 'dashboard'].includes(target)) {
+                window.location.assign('/');
+                success = true;
+              } else if (['routines', 'routine'].includes(target)) {
+                window.location.assign('/routines');
+                success = true;
+              } else {
+                // e.g., camera/messages: not supported on web
+                success = false;
+              }
+              break;
+            }
             default:
-              // Not supported on web: open_app, system volume, click at coordinates, etc.
+              // Not supported on web: system volume, click at coordinates, etc.
               success = false;
           }
         } catch (e) {

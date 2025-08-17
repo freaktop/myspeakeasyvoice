@@ -326,21 +326,43 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
                 });
                 return;
               }
-              // Auto-restart on error to maintain continuous listening
-              setTimeout(() => {
-                if (isListeningRef.current && !recognitionActiveRef.current) {
-                  try { recognition.start(); } catch { /* already started */ }
-                }
-              }, 800);
+              
+              // Don't restart on 'aborted' - this is normal when stopping manually
+              if (event.error === 'aborted') {
+                return;
+              }
+              
+              // Only restart on specific recoverable errors
+              if (event.error === 'network' || event.error === 'audio-capture') {
+                setTimeout(() => {
+                  if (isListeningRef.current && !recognitionActiveRef.current) {
+                    try { 
+                      recognition.start(); 
+                    } catch (e) { 
+                      console.log('Could not restart recognition:', e);
+                    }
+                  }
+                }, 2000);
+              }
             };
             
             recognition.onend = () => {
+              console.log('Speech recognition ended');
               recognitionActiveRef.current = false;
-              // Auto-restart to maintain continuous listening
+              // Only restart if we're still supposed to be listening and not due to an error
               if (isListeningRef.current) {
                 setTimeout(() => {
-                  try { recognition.start(); } catch { /* already started */ }
-                }, 120);
+                  if (isListeningRef.current && !recognitionActiveRef.current) {
+                    try { 
+                      recognition.start(); 
+                    } catch (e) {
+                      console.log('Recognition restart failed:', e);
+                      // If restart keeps failing, stop to prevent infinite errors
+                      setIsListening(false);
+                      isListeningRef.current = false;
+                    }
+                  }
+                }, 1000);
               }
             };
             

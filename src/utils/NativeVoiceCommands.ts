@@ -1,4 +1,8 @@
 import { Capacitor } from '@capacitor/core';
+import { AppLauncher } from '@capacitor/app-launcher';
+import { Camera, CameraResultType } from '@capacitor/camera';
+import { Share } from '@capacitor/share';
+import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { App } from '@capacitor/app';
 import { Device } from '@capacitor/device';
 
@@ -209,16 +213,72 @@ export class NativeVoiceCommands {
   }
 
   private async callNativeMethod(method: string, params: any): Promise<boolean> {
+    if (!Capacitor.isNativePlatform()) {
+      console.log(`Native method called (web fallback): ${method}`, params);
+      return false;
+    }
+
     try {
-      // This is a placeholder for native plugin calls
-      // In a real implementation, you would call your custom native plugin
-      console.log(`Native call: ${method}`, params);
-      
-      // For now, we'll simulate success for demonstration
-      // In production, this would interface with actual native Android/iOS APIs
-      return true;
+      switch (method) {
+        case 'openApp':
+          if (Capacitor.getPlatform() === 'android') {
+            await AppLauncher.openUrl({
+              url: `${params.packageName}://`
+            });
+          } else if (Capacitor.getPlatform() === 'ios') {
+            await AppLauncher.openUrl({
+              url: params.urlScheme
+            });
+          }
+          return true;
+        
+        case 'sendSMS':
+          await AppLauncher.openUrl({
+            url: `sms:&body=${encodeURIComponent(params.text)}`
+          });
+          return true;
+        
+        case 'insertText':
+          // This would require a custom plugin for text insertion
+          console.log('Text insertion requires custom plugin:', params.text);
+          return false;
+        
+        case 'scroll':
+          // Haptic feedback for scroll action
+          await Haptics.impact({ style: ImpactStyle.Light });
+          return false; // Requires custom plugin for actual scrolling
+        
+        case 'click':
+        case 'tap':
+          await Haptics.impact({ style: ImpactStyle.Medium });
+          return false; // Requires custom plugin for actual clicking
+        
+        case 'goHome':
+          if (Capacitor.getPlatform() === 'android') {
+            await AppLauncher.openUrl({ url: 'intent:///#Intent;action=android.intent.action.MAIN;category=android.intent.category.HOME;end' });
+          }
+          return true;
+        
+        case 'goBack':
+          await App.exitApp();
+          return true;
+        
+        case 'showRecentApps':
+          // This requires system-level access
+          return false;
+        
+        case 'volumeUp':
+        case 'volumeDown':
+          // Volume control requires system-level access
+          await Haptics.impact({ style: ImpactStyle.Heavy });
+          return false;
+        
+        default:
+          console.log(`Unsupported native method: ${method}`, params);
+          return false;
+      }
     } catch (error) {
-      console.error('Native method call failed:', error);
+      console.error(`Native method error: ${method}`, error);
       return false;
     }
   }

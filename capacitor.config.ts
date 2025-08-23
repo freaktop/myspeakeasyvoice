@@ -1,7 +1,7 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.84424d2b0ee946f88ff07ac94de71049',
+  appId: 'com.lovable.routinevoicepilot',
   appName: 'routine-voice-pilot',
   webDir: 'dist',
   server: {

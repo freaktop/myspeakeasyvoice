@@ -316,7 +316,6 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
               recognitionActiveRef.current = false;
 
               if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-                // Do not auto-restart; require user to allow mic
                 setIsListening(false);
                 isListeningRef.current = false;
                 toast({
@@ -327,12 +326,12 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
                 return;
               }
               
-              // Don't restart on 'aborted' - this is normal when stopping manually
-              if (event.error === 'aborted') {
+              // Don't restart on common errors that indicate user inactivity
+              if (event.error === 'aborted' || event.error === 'no-speech') {
                 return;
               }
               
-              // Only restart on specific recoverable errors
+              // Only restart on network-related errors
               if (event.error === 'network' || event.error === 'audio-capture') {
                 setTimeout(() => {
                   if (isListeningRef.current && !recognitionActiveRef.current) {
@@ -342,28 +341,16 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
                       console.log('Could not restart recognition:', e);
                     }
                   }
-                }, 2000);
+                }, 3000);
               }
             };
             
             recognition.onend = () => {
               console.log('Speech recognition ended');
               recognitionActiveRef.current = false;
-              // Only restart if we're still supposed to be listening and not due to an error
-              if (isListeningRef.current) {
-                setTimeout(() => {
-                  if (isListeningRef.current && !recognitionActiveRef.current) {
-                    try { 
-                      recognition.start(); 
-                    } catch (e) {
-                      console.log('Recognition restart failed:', e);
-                      // If restart keeps failing, stop to prevent infinite errors
-                      setIsListening(false);
-                      isListeningRef.current = false;
-                    }
-                  }
-                }, 1000);
-              }
+              // Don't automatically restart - let user manually activate when needed
+              setIsListening(false);
+              isListeningRef.current = false;
             };
             
             recognitionRef.current = recognition;

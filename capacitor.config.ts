@@ -34,8 +34,8 @@ const config: CapacitorConfig = {
       'android.permission.FOREGROUND_SERVICE',
       'android.permission.FOREGROUND_SERVICE_MICROPHONE',
       'android.permission.SYSTEM_ALERT_WINDOW',
-      'android.permission.ACCESSIBILITY_SERVICE',
-      'android.permission.BIND_ACCESSIBILITY_SERVICE',
+      
+      
       'android.permission.QUERY_ALL_PACKAGES',
       'android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS'
     ]

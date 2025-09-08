@@ -29,7 +29,12 @@ jobs:
         
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
-      
+
+    - name: Install Android SDK packages
+      run: |
+        sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0" "cmdline-tools;latest"
+        yes | sdkmanager --licenses
+
     - name: Install dependencies
       run: npm ci
       
@@ -62,6 +67,7 @@ jobs:
       run: |
         cd android
         chmod +x ./gradlew
+        export GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx2g -Dfile.encoding=UTF-8"
         ./gradlew assembleDebug --no-daemon
         
     - name: Upload APK artifact

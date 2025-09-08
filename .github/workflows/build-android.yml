@@ -39,9 +39,15 @@ jobs:
     - name: Install Capacitor CLI
       run: npm install -g @capacitor/cli
       
-    - name: Add Android platform
+    - name: Ensure Android platform
       run: |
-        if [ ! -d "android" ]; then
+        # If this is not a real Capacitor Android platform, recreate it
+        if [ ! -f "android/gradlew" ]; then
+          echo "Android platform not detected or invalid. Preparing fresh platform..."
+          if [ -d "android" ]; then
+            echo "Backing up existing ./android folder"
+            mv android android_backup_$(date +%s)
+          fi
           npx cap add android
         fi
         

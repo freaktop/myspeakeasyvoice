@@ -2,7 +2,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.lovable.routinevoicepilot',
-  appName: 'routine-voice-pilot',
+  appName: 'SpeakEasy Voice Control',
   webDir: 'dist',
   server: {
     url: "https://84424d2b-0ee9-46f8-8ff0-7ac94de71049.lovableproject.com?forceHideBadge=true",
@@ -12,14 +12,33 @@ const config: CapacitorConfig = {
     CapacitorHttp: {
       enabled: true,
     },
-    PushNotifications: {
-      presentationOptions: ['badge', 'sound', 'alert'],
+    LocalNotifications: {
+      smallIcon: 'ic_stat_icon_config_sample',
+      iconColor: '#488AFF',
+      sound: 'beep.wav',
     },
   },
   android: {
     allowMixedContent: true,
     captureInput: true,
     webContentsDebuggingEnabled: true,
+    permissions: [
+      'android.permission.RECORD_AUDIO',
+      'android.permission.MODIFY_AUDIO_SETTINGS',
+      'android.permission.WRITE_EXTERNAL_STORAGE',
+      'android.permission.READ_EXTERNAL_STORAGE', 
+      'android.permission.CAMERA',
+      'android.permission.VIBRATE',
+      'android.permission.WAKE_LOCK',
+      'android.permission.RECEIVE_BOOT_COMPLETED',
+      'android.permission.FOREGROUND_SERVICE',
+      'android.permission.FOREGROUND_SERVICE_MICROPHONE',
+      'android.permission.SYSTEM_ALERT_WINDOW',
+      'android.permission.ACCESSIBILITY_SERVICE',
+      'android.permission.BIND_ACCESSIBILITY_SERVICE',
+      'android.permission.QUERY_ALL_PACKAGES',
+      'android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS'
+    ]
   },
   ios: {
     contentInset: 'automatic',

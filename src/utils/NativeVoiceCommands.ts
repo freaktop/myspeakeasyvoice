@@ -5,6 +5,7 @@ import { Share } from '@capacitor/share';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { App } from '@capacitor/app';
 import { Device } from '@capacitor/device';
+import AccessibilityService from '@/plugins/AccessibilityService';
 
 export interface SystemCommand {
   type: 'open_app' | 'send_text' | 'scroll' | 'click' | 'navigate' | 'system_action';
@@ -44,12 +45,18 @@ export class NativeVoiceCommands {
   }
 
   async executeCommand(command: SystemCommand): Promise<boolean> {
-    if (!this.isNative) {
-      console.warn('Native commands only work on mobile devices');
-      return false;
-    }
-
     try {
+      console.log('Executing system command:', command);
+      
+      // Check accessibility service for native Android capabilities
+      if (this.isNative && this.deviceInfo?.platform === 'android') {
+        const accessibilityEnabled = await AccessibilityService.isAccessibilityServiceEnabled();
+        if (!accessibilityEnabled.enabled) {
+          console.warn('Accessibility service not enabled. Some commands may not work.');
+          // Still try to execute with fallbacks
+        }
+      }
+      
       switch (command.type) {
         case 'open_app':
           return await this.openApp(command.target!);
@@ -81,7 +88,22 @@ export class NativeVoiceCommands {
 
   private async openApp(appName: string): Promise<boolean> {
     try {
-      // Map common app names to package names
+      // First try using accessibility service for Android
+      if (this.isNative && this.deviceInfo?.platform === 'android') {
+        // Get installed apps to find the correct package name
+        const installedApps = await AccessibilityService.getInstalledApps();
+        const matchedApp = installedApps.apps.find(app => 
+          app.name.toLowerCase().includes(appName.toLowerCase()) ||
+          appName.toLowerCase().includes(app.name.toLowerCase())
+        );
+        
+        if (matchedApp) {
+          const result = await AccessibilityService.openApp({ packageName: matchedApp.packageName });
+          if (result.success) return true;
+        }
+      }
+      
+      // Fallback to existing logic
       const appPackages: { [key: string]: string } = {
         'camera': 'com.android.camera',
         'messages': 'com.google.android.apps.messaging',
@@ -102,12 +124,11 @@ export class NativeVoiceCommands {
       const packageName = appPackages[appName.toLowerCase()] || appName;
       
       if (this.deviceInfo?.platform === 'android') {
-        // For Android, we'll use a custom native plugin call
-        // This would require implementing a native Android plugin
         console.log(`Opening Android app: ${packageName}`);
-        return await this.callNativeMethod('openApp', { packageName });
+        const result = await AccessibilityService.openApp({ packageName });
+        return result.success;
       } else if (this.deviceInfo?.platform === 'ios') {
-        // For iOS, we'll use URL schemes
+        // iOS URL schemes
         const iosSchemes: { [key: string]: string } = {
           'camera': 'camera://',
           'messages': 'sms://',
@@ -139,14 +160,18 @@ export class NativeVoiceCommands {
     try {
       if (target?.toLowerCase().includes('message') || target?.toLowerCase().includes('sms')) {
         // Open messaging app with pre-filled text
-        if (this.deviceInfo?.platform === 'android') {
+        if (this.isNative && this.deviceInfo?.platform === 'android') {
           return await this.callNativeMethod('sendSMS', { text });
         } else {
           window.open(`sms:&body=${encodeURIComponent(text)}`, '_system');
           return true;
         }
       } else {
-        // Insert text at current cursor position
+        // Insert text at current cursor position using accessibility service
+        if (this.isNative && this.deviceInfo?.platform === 'android') {
+          const result = await AccessibilityService.sendText({ text });
+          return result.success;
+        }
         return await this.callNativeMethod('insertText', { text });
       }
     } catch (error) {
@@ -157,6 +182,10 @@ export class NativeVoiceCommands {
 
   private async performScroll(direction: string): Promise<boolean> {
     try {
+      if (this.isNative && this.deviceInfo?.platform === 'android') {
+        const result = await AccessibilityService.performScroll({ direction });
+        if (result.success) return true;
+      }
       return await this.callNativeMethod('scroll', { direction });
     } catch (error) {
       console.error('Failed to scroll:', error);
@@ -166,10 +195,20 @@ export class NativeVoiceCommands {
 
   private async performClick(coordinates?: { x: number; y: number }): Promise<boolean> {
     try {
+      if (this.isNative && this.deviceInfo?.platform === 'android') {
+        if (coordinates) {
+          const result = await AccessibilityService.performClick(coordinates);
+          return result.success;
+        } else {
+          // Default center tap
+          const result = await AccessibilityService.performClick({ x: 500, y: 1000 });
+          return result.success;
+        }
+      }
+      
       if (coordinates) {
         return await this.callNativeMethod('click', coordinates);
       } else {
-        // Simulate tap at center of screen
         return await this.callNativeMethod('tap', {});
       }
     } catch (error) {
@@ -180,6 +219,11 @@ export class NativeVoiceCommands {
 
   private async performNavigation(action: string): Promise<boolean> {
     try {
+      if (this.isNative && this.deviceInfo?.platform === 'android') {
+        const result = await AccessibilityService.performGlobalAction({ action });
+        if (result.success) return true;
+      }
+      
       switch (action) {
         case 'home':
           return await this.callNativeMethod('goHome', {});

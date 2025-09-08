@@ -25,8 +25,6 @@ const config: CapacitorConfig = {
     permissions: [
       'android.permission.RECORD_AUDIO',
       'android.permission.MODIFY_AUDIO_SETTINGS',
-      'android.permission.WRITE_EXTERNAL_STORAGE',
-      'android.permission.READ_EXTERNAL_STORAGE', 
       'android.permission.CAMERA',
       'android.permission.VIBRATE',
       'android.permission.WAKE_LOCK',
@@ -34,8 +32,6 @@ const config: CapacitorConfig = {
       'android.permission.FOREGROUND_SERVICE',
       'android.permission.FOREGROUND_SERVICE_MICROPHONE',
       'android.permission.SYSTEM_ALERT_WINDOW',
-      
-      
       'android.permission.QUERY_ALL_PACKAGES',
       'android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS'
     ]

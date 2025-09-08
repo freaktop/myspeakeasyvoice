@@ -26,6 +26,7 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
+        cache: 'gradle'
         
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
@@ -58,6 +59,21 @@ jobs:
         
     - name: Sync Capacitor
       run: npx cap sync android
+
+    - name: Configure Android SDK path
+      run: |
+        echo "sdk.dir=$ANDROID_SDK_ROOT" > android/local.properties
+        if [ -n "${ANDROID_NDK_ROOT:-}" ]; then echo "ndk.dir=$ANDROID_NDK_ROOT" >> android/local.properties; fi
+
+    - name: Ensure Gradle properties
+      run: |
+        cd android
+        {
+          echo "org.gradle.jvmargs=-Xmx3g -Dfile.encoding=UTF-8";
+          echo "android.useAndroidX=true";
+          echo "android.enableJetifier=true";
+        } >> gradle.properties
+      shell: bash
       
     - name: Create keystore (debug)
       run: |
@@ -68,7 +84,7 @@ jobs:
         cd android
         chmod +x ./gradlew
         export GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx2g -Dfile.encoding=UTF-8"
-        ./gradlew assembleDebug --no-daemon
+        ./gradlew assembleDebug --no-daemon --stacktrace --info
         
     - name: Upload APK artifact
       uses: actions/upload-artifact@v4

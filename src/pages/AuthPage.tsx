@@ -58,14 +58,15 @@ const AuthPage = () => {
           variant: "destructive",
         });
       } else {
-        // Check if user is immediately confirmed (email confirmation disabled)
+        // Check if user needs email confirmation
         if (data?.user && !data.user.email_confirmed_at) {
+          // Email confirmation required
           toast({
             title: "Account created!",
             description: "Please check your email to confirm your account.",
           });
-        } else {
-          // User is automatically logged in (email confirmation disabled)
+        } else if (data?.user) {
+          // User is automatically confirmed and logged in (email confirmation disabled)
           toast({
             title: "Welcome to SpeakEasy!",
             description: "Your account has been created and you're now logged in.",

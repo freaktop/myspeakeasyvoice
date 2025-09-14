@@ -496,6 +496,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      log_waitlist_unauthorized_access: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       sanitize_command_text: {
         Args: { command_text: string }
         Returns: string

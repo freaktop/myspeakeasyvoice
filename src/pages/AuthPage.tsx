@@ -49,7 +49,7 @@ const AuthPage = () => {
     setLoading(true);
 
     try {
-      const { error } = await signUp(email, password, displayName);
+      const { data, error } = await signUp(email, password, displayName);
       
       if (error) {
         toast({
@@ -58,10 +58,20 @@ const AuthPage = () => {
           variant: "destructive",
         });
       } else {
-        toast({
-          title: "Account created!",
-          description: "Please check your email to confirm your account.",
-        });
+        // Check if user is immediately confirmed (email confirmation disabled)
+        if (data?.user && !data.user.email_confirmed_at) {
+          toast({
+            title: "Account created!",
+            description: "Please check your email to confirm your account.",
+          });
+        } else {
+          // User is automatically logged in (email confirmation disabled)
+          toast({
+            title: "Welcome to SpeakEasy!",
+            description: "Your account has been created and you're now logged in.",
+          });
+          navigate('/');
+        }
       }
     } finally {
       setLoading(false);

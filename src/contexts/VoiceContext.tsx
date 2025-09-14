@@ -8,7 +8,7 @@ import { nativeVoiceCommands, SystemCommand } from '@/utils/NativeVoiceCommands'
 import { backgroundVoiceService } from '@/utils/BackgroundVoiceService';
 import { voiceFeedback } from '@/utils/VoiceFeedback';
 import { Capacitor } from '@capacitor/core';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 interface VoiceSettings {
   wakePhrase: string;

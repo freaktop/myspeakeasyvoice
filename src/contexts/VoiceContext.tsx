@@ -348,7 +348,7 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
               console.error('Speech recognition error:', event.error);
               recognitionActiveRef.current = false;
 
-              // Handle permission errors
+              // Handle permission errors - stop completely
               if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
                 setIsListening(false);
                 isListeningRef.current = false;
@@ -360,28 +360,41 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
                 return;
               }
               
-              // Handle network errors by attempting restart
-              if (event.error === 'network') {
+              // Handle aborted errors - don't restart automatically to avoid loops
+              if (event.error === 'aborted') {
+                console.log('Speech recognition aborted, stopping auto-restart');
+                setIsListening(false);
+                isListeningRef.current = false;
                 toast({
-                  title: "Network Issue",
-                  description: "Attempting to reconnect...",
+                  title: "Voice Recognition Stopped",
+                  description: "Click the microphone button to restart voice recognition",
                   variant: "destructive"
                 });
-                
+                return;
+              }
+              
+              // Handle network errors with limited retries
+              if (event.error === 'network') {
+                console.log('Network error - will attempt restart after delay');
+                // Don't show toast for network errors, just log
                 setTimeout(() => {
                   if (isListeningRef.current && !recognitionActiveRef.current) {
                     try { 
                       recognition.start(); 
                     } catch (e) { 
-                      console.log('Could not restart recognition:', e);
+                      console.log('Could not restart after network error:', e);
+                      setIsListening(false);
+                      isListeningRef.current = false;
                     }
                   }
-                }, 2000);
+                }, 3000);
               }
               
-              // Handle other errors gracefully
+              // Handle no-speech errors quietly
               if (event.error === 'no-speech') {
                 console.log('No speech detected, continuing to listen...');
+                // Don't restart immediately for no-speech
+                return;
               }
             };
             

@@ -100,16 +100,19 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
   }, [isNativeMode]);
 
   const handleVoiceCommand = async (command: string) => {
-    console.log('Voice command received:', command);
+    console.log('🎤 Voice command received:', command);
     setLastCommand(command);
     
     // Detect if this is a system command first
     const parsed = nativeVoiceCommands.parseVoiceCommand(command);
+    console.log('🔍 Parsed command:', parsed);
 
     // Try to execute as system command when applicable
     const executed = await executeSystemCommand(command);
+    console.log('✅ System command executed:', executed);
     
     if (executed) {
+      console.log('🎯 System command successful:', command);
       toast({
         title: "Command Executed",
         description: `System command: ${command}`,
@@ -125,6 +128,7 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
 
     // If it looked like a system command but couldn't run (e.g., unsupported on web), don't fallback silently
     if (parsed) {
+      console.log('⚠️ System command parsed but failed to execute:', parsed);
       const errorMessage = "That system command requires the mobile app or extra permissions.";
       toast({
         title: "Not available here",
@@ -141,6 +145,7 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
     }
 
     // Fall back to regular voice command processing
+    console.log('🔄 Falling back to regular command processing');
     await processRegularCommand(command);
   };
 
@@ -330,9 +335,12 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
                 }
               }
               const transcript = finalTranscript.trim();
+              console.log('🎙️ Raw transcript received:', transcript);
               if (transcript && isListeningRef.current) {
-                console.log('Voice command detected:', transcript);
+                console.log('🎯 Processing voice command:', transcript);
                 handleVoiceCommand(transcript);
+              } else {
+                console.log('❌ Transcript ignored - empty or not listening');
               }
             };
             

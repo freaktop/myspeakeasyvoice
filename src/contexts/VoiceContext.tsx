@@ -101,6 +101,32 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
 
   const handleVoiceCommand = async (command: string) => {
     console.log('🎤 Voice command received:', command);
+    
+    // Validate command before processing
+    const trimmedCommand = command.trim().toLowerCase();
+    
+    // Ignore very short or meaningless commands
+    if (trimmedCommand.length < 3) {
+      console.log('❌ Command too short, ignoring:', command);
+      return;
+    }
+    
+    // Ignore common background noise patterns
+    const noisePatterns = ['hm', 'hmm', 'uh', 'um', 'ah', 'eh', 'oh', 'the', 'a', 'and', 'but', 'or'];
+    if (noisePatterns.includes(trimmedCommand)) {
+      console.log('❌ Background noise detected, ignoring:', command);
+      return;
+    }
+    
+    // Require at least one action word for valid commands
+    const actionWords = ['open', 'close', 'scroll', 'go', 'back', 'forward', 'click', 'play', 'stop', 'call', 'set', 'turn', 'start', 'end', 'book', 'send', 'check'];
+    const hasActionWord = actionWords.some(word => trimmedCommand.includes(word));
+    
+    if (!hasActionWord) {
+      console.log('❌ No action word detected, ignoring:', command);
+      return;
+    }
+    
     setLastCommand(command);
     
     // Detect if this is a system command first
@@ -321,17 +347,22 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
             recognition.interimResults = false; // Only final results to avoid noise
             recognition.lang = 'en-US';
             recognition.maxAlternatives = 1;
-
-            recognition.onstart = () => {
-              recognitionActiveRef.current = true;
-              console.log('Voice recognition started - listening for commands');
-            };
             
+            // Add confidence threshold to filter out low-confidence results
             recognition.onresult = (event: any) => {
               let finalTranscript = '';
               for (let i = event.resultIndex; i < event.results.length; i++) {
                 if (event.results[i].isFinal) {
-                  finalTranscript += event.results[i][0].transcript;
+                  // Check confidence level (0-1)
+                  const confidence = event.results[i][0].confidence;
+                  console.log('🎯 Speech confidence:', confidence);
+                  
+                  // Only process high-confidence results
+                  if (confidence > 0.7) {
+                    finalTranscript += event.results[i][0].transcript;
+                  } else {
+                    console.log('❌ Low confidence speech ignored:', event.results[i][0].transcript, 'confidence:', confidence);
+                  }
                 }
               }
               const transcript = finalTranscript.trim();

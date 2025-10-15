@@ -3,6 +3,7 @@ import { MicButton } from '@/components/MicButton';
 import { ListeningIndicator } from '@/components/ListeningIndicator';
 import { Logo } from '@/components/Logo';
 import { VoiceStatusIndicator } from '@/components/VoiceStatusIndicator';
+import RealtimeVoiceInterface from '@/components/RealtimeVoiceInterface';
 import { useVoice } from '@/contexts/VoiceContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
@@ -13,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ModeToggle from '@/components/ModeToggle';
 import NativeCommandsPanel from '@/components/NativeCommandsPanel';
 import { useNavigate } from 'react-router-dom';
-import { Zap, Plus, History, Volume2, LogOut, Smartphone, Settings, Mic } from 'lucide-react';
+import { Zap, Plus, History, Volume2, LogOut, Smartphone, Settings, Mic, Brain } from 'lucide-react';
 
 const HomePage = () => {
   const { 
@@ -100,10 +101,14 @@ const HomePage = () => {
         </div>
 
         <Tabs defaultValue="control" className="max-w-7xl mx-auto">
-          <TabsList className="grid w-full grid-cols-3 h-12 sm:h-14 bg-gradient-to-r from-card to-card/50 border border-border/50 rounded-xl">
+          <TabsList className="grid w-full grid-cols-4 h-12 sm:h-14 bg-gradient-to-r from-card to-card/50 border border-border/50 rounded-xl">
             <TabsTrigger value="control" className="text-sm sm:text-base font-medium data-[state=active]:bg-primary/20 data-[state=active]:text-primary rounded-lg px-2 sm:px-4">
               <span className="hidden sm:inline">Voice Control</span>
               <span className="sm:hidden">Voice</span>
+            </TabsTrigger>
+            <TabsTrigger value="ai" className="text-sm sm:text-base font-medium data-[state=active]:bg-primary/20 data-[state=active]:text-primary rounded-lg px-2 sm:px-4">
+              <span className="hidden sm:inline">AI Chat</span>
+              <span className="sm:hidden">AI</span>
             </TabsTrigger>
             <TabsTrigger value="system" className="text-sm sm:text-base font-medium data-[state=active]:bg-primary/20 data-[state=active]:text-primary rounded-lg px-2 sm:px-4">
               <span className="hidden sm:inline">System Commands</span>
@@ -189,6 +194,27 @@ const HomePage = () => {
                       </>
                     )}
                   </div>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="ai" className="space-y-6 sm:space-y-8 mt-6 sm:mt-8">
+            <div className="text-center mb-6">
+              <Card className="command-card border-primary/20">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center justify-center gap-3 text-2xl">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+                      <Brain className="w-5 h-5 text-primary" />
+                    </div>
+                    AI Conversation Assistant
+                  </CardTitle>
+                  <CardDescription className="text-base">
+                    Have natural conversations with your AI assistant using voice or text
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <RealtimeVoiceInterface />
                 </CardContent>
               </Card>
             </div>

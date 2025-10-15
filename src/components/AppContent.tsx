@@ -9,6 +9,7 @@ import SettingsPage from '@/pages/SettingsPage';
 import RoutinesPage from '@/pages/RoutinesPage';
 import CommandLogPage from '@/pages/CommandLogPage';
 import AuthPage from '@/pages/AuthPage';
+import OnboardingPage from '@/pages/OnboardingPage';
 import PrivacyPolicyPage from '@/pages/PrivacyPolicyPage';
 import TermsPage from '@/pages/TermsPage';
 import VoiceTrainingPage from '@/components/VoiceTrainingPage';
@@ -44,10 +45,21 @@ const AppContent = () => {
   // Redirect logic
   useEffect(() => {
     if (!loading && !showSplash) {
-      if (!user && location.pathname !== '/auth') {
+      // Check for onboarding completion first
+      const hasCompletedOnboarding = localStorage.getItem('voice-onboarding-completed');
+      
+      if (!user && location.pathname !== '/auth' && location.pathname !== '/privacy' && location.pathname !== '/terms') {
         navigate('/auth');
       } else if (user && location.pathname === '/auth') {
-        navigate('/');
+        // If user is logged in but hasn't completed onboarding, redirect to onboarding
+        if (!hasCompletedOnboarding) {
+          navigate('/onboarding');
+        } else {
+          navigate('/');
+        }
+      } else if (user && !hasCompletedOnboarding && location.pathname !== '/onboarding') {
+        // Redirect to onboarding if user is logged in but hasn't completed it
+        navigate('/onboarding');
       }
     }
   }, [user, loading, showSplash, location.pathname, navigate]);
@@ -76,6 +88,7 @@ const AppContent = () => {
       {location.pathname === '/commands' && <Layout><CommandLogPage /></Layout>}
       {location.pathname === '/command-log' && <Layout><CommandLogPage /></Layout>}
       {location.pathname === '/voice-training' && <Layout><VoiceTrainingPage /></Layout>}
+      {location.pathname === '/onboarding' && <OnboardingPage />}
       {location.pathname === '/privacy' && <PrivacyPolicyPage />}
       {location.pathname === '/terms' && <TermsPage />}
     </>

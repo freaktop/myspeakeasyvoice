@@ -10,10 +10,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Slider } from '@/components/ui/slider';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { AndroidSetupGuide } from '@/components/AndroidSetupGuide';
 import { useState } from 'react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { LogOut, User, Mic, Shield, Bell } from 'lucide-react';
 import { toast } from 'sonner';
+import { Capacitor } from '@capacitor/core';
 
 const SettingsPage = () => {
   const { user, signOut } = useAuth();
@@ -165,6 +167,11 @@ const SettingsPage = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Android System Integration */}
+      {Capacitor.isNativePlatform() && Capacitor.getPlatform() === 'android' && (
+        <AndroidSetupGuide />
+      )}
 
       {/* Privacy & Security */}
       <Card>

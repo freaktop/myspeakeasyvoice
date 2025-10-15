@@ -6,8 +6,9 @@ import { useVoiceCommands } from '@/hooks/useVoiceCommands';
 import { useCommandHistory } from '@/hooks/useCommandHistory';
 import { nativeVoiceCommands, SystemCommand } from '@/utils/NativeVoiceCommands';
 import { backgroundVoiceService } from '@/utils/BackgroundVoiceService';
+import { voiceFeedback } from '@/utils/VoiceFeedback';
 import { Capacitor } from '@capacitor/core';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 
 interface VoiceSettings {
   wakePhrase: string;
@@ -56,7 +57,7 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
   const [currentMode, setCurrentMode] = useState<'personal' | 'professional'>('personal');
   const [backgroundListening, setBackgroundListening] = useState(false);
   const [isNativeMode] = useState(Capacitor.isNativePlatform());
-  const [voiceFeedback, setVoiceFeedback] = useState<'male' | 'female' | 'none'>('male');
+  const [voiceFeedbackType, setVoiceFeedbackType] = useState<'male' | 'female' | 'none'>('male');
   const isListeningRef = useRef(false);
   const recognitionRef = useRef<any | null>(null);
   const recognitionActiveRef = useRef(false);
@@ -73,7 +74,7 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
   // Settings from profile or defaults  
   const settings: VoiceSettings = {
     wakePhrase: profile?.wake_phrase || 'Hey SpeakEasy',
-    voiceFeedback: voiceFeedback,
+    voiceFeedback: voiceFeedbackType,
     sensitivity: Math.round((profile?.microphone_sensitivity || 0.8) * 10),
     preferredMode: profile?.preferred_mode || 'personal',
   };
@@ -83,7 +84,15 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
     if (profile?.preferred_mode) {
       setCurrentMode(profile.preferred_mode);
     }
-  }, [profile?.preferred_mode]);
+    
+    // Update voice feedback settings based on profile
+    if (profile?.voice_feedback_enabled !== undefined) {
+      voiceFeedback.updateSettings({ 
+        enabled: profile.voice_feedback_enabled,
+        voice: voiceFeedbackType === 'male' ? 'male' : 'female'
+      });
+    }
+  }, [profile?.preferred_mode, profile?.voice_feedback_enabled, voiceFeedbackType]);
 
   // Initialize background voice service for continuous listening
   useEffect(() => {
@@ -91,34 +100,78 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
   }, [isNativeMode]);
 
   const handleVoiceCommand = async (command: string) => {
-    console.log('Voice command received:', command);
+    console.log('🎤 Voice command received:', command);
+    
+    // Validate command before processing
+    const trimmedCommand = command.trim().toLowerCase();
+    
+    // Ignore very short or meaningless commands
+    if (trimmedCommand.length < 3) {
+      console.log('❌ Command too short, ignoring:', command);
+      return;
+    }
+    
+    // Ignore common background noise patterns
+    const noisePatterns = ['hm', 'hmm', 'uh', 'um', 'ah', 'eh', 'oh', 'the', 'a', 'and', 'but', 'or'];
+    if (noisePatterns.includes(trimmedCommand)) {
+      console.log('❌ Background noise detected, ignoring:', command);
+      return;
+    }
+    
+    // Require at least one action word for valid commands
+    const actionWords = ['open', 'close', 'scroll', 'go', 'back', 'forward', 'click', 'play', 'stop', 'call', 'set', 'turn', 'start', 'end', 'book', 'send', 'check'];
+    const hasActionWord = actionWords.some(word => trimmedCommand.includes(word));
+    
+    if (!hasActionWord) {
+      console.log('❌ No action word detected, ignoring:', command);
+      return;
+    }
+    
     setLastCommand(command);
     
     // Detect if this is a system command first
     const parsed = nativeVoiceCommands.parseVoiceCommand(command);
+    console.log('🔍 Parsed command:', parsed);
 
     // Try to execute as system command when applicable
     const executed = await executeSystemCommand(command);
+    console.log('✅ System command executed:', executed);
     
     if (executed) {
+      console.log('🎯 System command successful:', command);
       toast({
         title: "Command Executed",
         description: `System command: ${command}`,
       });
+      
+      // Provide voice feedback for successful commands
+      if (profile?.voice_feedback_enabled) {
+        await voiceFeedback.speakCommandConfirmation(command, "Command completed successfully");
+      }
+      
       return;
     }
 
     // If it looked like a system command but couldn't run (e.g., unsupported on web), don't fallback silently
     if (parsed) {
+      console.log('⚠️ System command parsed but failed to execute:', parsed);
+      const errorMessage = "That system command requires the mobile app or extra permissions.";
       toast({
         title: "Not available here",
-        description: "That system command requires the mobile app or extra permissions.",
+        description: errorMessage,
         variant: "destructive",
       });
+      
+      // Provide voice feedback for failed commands
+      if (profile?.voice_feedback_enabled) {
+        await voiceFeedback.speakError("command not available on this platform");
+      }
+      
       return;
     }
 
     // Fall back to regular voice command processing
+    console.log('🔄 Falling back to regular command processing');
     await processRegularCommand(command);
   };
 
@@ -241,6 +294,11 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
       title: "Command Processed",
       description: selectedCommand.action,
     });
+
+    // Provide voice feedback for regular commands
+    if (profile?.voice_feedback_enabled) {
+      await voiceFeedback.speakCommandConfirmation(command, selectedCommand.action);
+    }
   };
 
   const startListening = () => {
@@ -255,7 +313,7 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
         description: "Always listening for 'Hey SpeakEasy'",
       });
     } else {
-      // Web: request mic permission first, then start/reuse recognition safely
+      // Web: improved recognition with better error handling and restart logic
       (async () => {
         try {
           if (navigator.mediaDevices?.getUserMedia) {
@@ -267,8 +325,8 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
           setIsListening(false);
           isListeningRef.current = false;
           toast({
-            title: "Microphone blocked",
-            description: "Allow mic access to use voice commands",
+            title: "Microphone Access Required",
+            description: "Please enable microphone permissions in your browser settings",
             variant: "destructive"
           });
           return;
@@ -277,37 +335,43 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
         setIsListening(true);
         isListeningRef.current = true;
         
-        // Try to use Web Speech API for continuous listening
+        // Enhanced Web Speech API implementation
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
           const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
 
-          // Create or reuse a single recognition instance
+          // Create or reuse recognition instance with improved settings
           if (!recognitionRef.current) {
             const recognition = new SpeechRecognition();
             
-            recognition.continuous = true;  // Enable continuous listening
-            recognition.interimResults = true;
+            recognition.continuous = true;
+            recognition.interimResults = false; // Only final results to avoid noise
             recognition.lang = 'en-US';
-
-            recognition.onstart = () => {
-              recognitionActiveRef.current = true;
-              console.log('Web speech recognition started');
-            };
+            recognition.maxAlternatives = 1;
             
+            // Add confidence threshold to filter out low-confidence results
             recognition.onresult = (event: any) => {
               let finalTranscript = '';
               for (let i = event.resultIndex; i < event.results.length; i++) {
                 if (event.results[i].isFinal) {
-                  finalTranscript += event.results[i][0].transcript;
+                  // Check confidence level (0-1)
+                  const confidence = event.results[i][0].confidence;
+                  console.log('🎯 Speech confidence:', confidence);
+                  
+                  // Only process high-confidence results
+                  if (confidence > 0.7) {
+                    finalTranscript += event.results[i][0].transcript;
+                  } else {
+                    console.log('❌ Low confidence speech ignored:', event.results[i][0].transcript, 'confidence:', confidence);
+                  }
                 }
               }
               const transcript = finalTranscript.trim();
-              if (transcript) {
-                console.log('Web speech recognition final result:', transcript);
-              }
-              // Only process final results to avoid partial triggers
+              console.log('🎙️ Raw transcript received:', transcript);
               if (transcript && isListeningRef.current) {
+                console.log('🎯 Processing voice command:', transcript);
                 handleVoiceCommand(transcript);
+              } else {
+                console.log('❌ Transcript ignored - empty or not listening');
               }
             };
             
@@ -315,49 +379,69 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
               console.error('Speech recognition error:', event.error);
               recognitionActiveRef.current = false;
 
+              // Handle permission errors - stop completely
               if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
-                // Do not auto-restart; require user to allow mic
                 setIsListening(false);
                 isListeningRef.current = false;
                 toast({
-                  title: "Microphone blocked",
-                  description: "Enable mic permissions and try again",
+                  title: "Microphone Access Denied",
+                  description: "Please enable microphone permissions and try again",
                   variant: "destructive"
                 });
                 return;
               }
               
-              // Don't restart on 'aborted' - this is normal when stopping manually
+              // Handle aborted errors - don't restart automatically to avoid loops
               if (event.error === 'aborted') {
+                console.log('Speech recognition aborted, stopping auto-restart');
+                setIsListening(false);
+                isListeningRef.current = false;
+                toast({
+                  title: "Voice Recognition Stopped",
+                  description: "Click the microphone button to restart voice recognition",
+                  variant: "destructive"
+                });
                 return;
               }
               
-              // Only restart on specific recoverable errors
-              if (event.error === 'network' || event.error === 'audio-capture') {
+              // Handle network errors with limited retries
+              if (event.error === 'network') {
+                console.log('Network error - will attempt restart after delay');
+                // Don't show toast for network errors, just log
                 setTimeout(() => {
                   if (isListeningRef.current && !recognitionActiveRef.current) {
                     try { 
                       recognition.start(); 
                     } catch (e) { 
-                      console.log('Could not restart recognition:', e);
+                      console.log('Could not restart after network error:', e);
+                      setIsListening(false);
+                      isListeningRef.current = false;
                     }
                   }
-                }, 2000);
+                }, 3000);
+              }
+              
+              // Handle no-speech errors quietly
+              if (event.error === 'no-speech') {
+                console.log('No speech detected, continuing to listen...');
+                // Don't restart immediately for no-speech
+                return;
               }
             };
             
             recognition.onend = () => {
-              console.log('Speech recognition ended');
+              console.log('Speech recognition session ended');
               recognitionActiveRef.current = false;
-              // Only restart if we're still supposed to be listening and not due to an error
+              
+              // Auto-restart if still supposed to be listening
               if (isListeningRef.current) {
                 setTimeout(() => {
                   if (isListeningRef.current && !recognitionActiveRef.current) {
-                    try { 
-                      recognition.start(); 
+                    try {
+                      recognition.start();
+                      console.log('Restarting voice recognition...');
                     } catch (e) {
-                      console.log('Recognition restart failed:', e);
-                      // If restart keeps failing, stop to prevent infinite errors
+                      console.log('Could not restart recognition:', e);
                       setIsListening(false);
                       isListeningRef.current = false;
                     }
@@ -369,40 +453,43 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
             recognitionRef.current = recognition;
           }
           
-          // Start only if not already running
+          // Start recognition safely
           if (!recognitionActiveRef.current) {
             try {
               recognitionRef.current.start();
+              toast({
+                title: "Voice Recognition Active",
+                description: "Say commands like 'scroll down', 'go back', or 'open settings'",
+              });
+              
+              // Welcome voice feedback
+              if (profile?.voice_feedback_enabled) {
+                setTimeout(() => voiceFeedback.speakWelcome(), 500);
+              }
             } catch (e: any) {
               if (String(e?.message || e).includes('already started')) {
                 console.debug('Recognition already running');
               } else {
                 console.error('Failed to start recognition:', e);
+                toast({
+                  title: "Voice Recognition Failed",
+                  description: "Unable to start voice recognition. Please try again.",
+                  variant: "destructive"
+                });
+                setIsListening(false);
+                isListeningRef.current = false;
               }
             }
           }
-          
-          toast({
-            title: "Listening...",
-            description: "Try saying 'scroll down' or 'go back'",
-          });
         } else {
-          // Fallback simulation
-          setTimeout(() => {
-            const testCommands = [
-              'scroll down',
-              'go back',
-              'scroll up'
-            ];
-            
-            const randomCommand = testCommands[Math.floor(Math.random() * testCommands.length)];
-            handleVoiceCommand(randomCommand);
-          }, 1200);
-          
+          // Enhanced fallback for browsers without Speech Recognition
           toast({
-            title: "Simulated Voice Command",
-            description: "Testing with a random command",
+            title: "Voice Recognition Unavailable", 
+            description: "Your browser doesn't support voice recognition. Try Chrome or Edge.",
+            variant: "destructive"
           });
+          setIsListening(false);
+          isListeningRef.current = false;
         }
       })();
     }
@@ -428,7 +515,7 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
       profileUpdates.wake_phrase = newSettings.wakePhrase;
     }
     if (newSettings.voiceFeedback !== undefined) {
-      setVoiceFeedback(newSettings.voiceFeedback);
+      setVoiceFeedbackType(newSettings.voiceFeedback);
     }
     if (newSettings.sensitivity !== undefined) {
       profileUpdates.microphone_sensitivity = newSettings.sensitivity / 10;
@@ -464,24 +551,34 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
     if (!isNativeMode) {
       toast({
         title: "Background Listening",
-        description: "Background listening is only available on mobile devices",
+        description: "Background listening is only available on mobile devices. On web, use the microphone button for manual listening.",
         variant: "destructive"
       });
       return;
     }
 
     try {
-      await backgroundVoiceService.enableAlwaysListening();
-      setBackgroundListening(true);
-      
-      toast({
-        title: "Background Listening Enabled",
-        description: "Voice assistant will now listen even when app is closed",
-      });
+      const success = await backgroundVoiceService.enableAlwaysListening();
+      if (success) {
+        setBackgroundListening(true);
+        
+        toast({
+          title: "Background Listening Enabled",
+          description: "Voice assistant will now listen even when app is closed",
+        });
+        
+        // Update user settings to reflect background listening preference
+        if (profile && user) {
+          await updateProfile({ voice_feedback_enabled: true });
+        }
+      } else {
+        throw new Error('Failed to enable background listening');
+      }
     } catch (error) {
+      console.error('Background listening error:', error);
       toast({
         title: "Permission Required",
-        description: "Please grant microphone and background permissions",
+        description: "Please grant microphone and background permissions in your device settings",
         variant: "destructive"
       });
     }

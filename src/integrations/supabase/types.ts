@@ -7,10 +7,10 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "13.0.4"
+    PostgrestVersion: "13.0.5"
   }
   public: {
     Tables: {
@@ -18,7 +18,7 @@ export type Database = {
         Row: {
           app_name: string
           created_at: string
-          credentials: Json | null
+          encrypted_credentials: string | null
           id: string
           integration_type: string
           is_active: boolean | null
@@ -28,7 +28,7 @@ export type Database = {
         Insert: {
           app_name: string
           created_at?: string
-          credentials?: Json | null
+          encrypted_credentials?: string | null
           id?: string
           integration_type: string
           is_active?: boolean | null
@@ -38,7 +38,7 @@ export type Database = {
         Update: {
           app_name?: string
           created_at?: string
-          credentials?: Json | null
+          encrypted_credentials?: string | null
           id?: string
           integration_type?: string
           is_active?: boolean | null
@@ -80,6 +80,50 @@ export type Database = {
         }
         Relationships: []
       }
+      credential_access_log: {
+        Row: {
+          access_type: string
+          created_at: string | null
+          error_message: string | null
+          id: string
+          integration_id: string | null
+          ip_address: unknown | null
+          success: boolean | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          access_type: string
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          integration_id?: string | null
+          ip_address?: unknown | null
+          success?: boolean | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          access_type?: string
+          created_at?: string | null
+          error_message?: string | null
+          id?: string
+          integration_id?: string | null
+          ip_address?: unknown | null
+          success?: boolean | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "credential_access_log_integration_id_fkey"
+            columns: ["integration_id"]
+            isOneToOne: false
+            referencedRelation: "app_integrations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           created_at: string
@@ -116,6 +160,36 @@ export type Database = {
           user_id?: string
           voice_feedback_enabled?: boolean | null
           wake_phrase?: string | null
+        }
+        Relationships: []
+      }
+      security_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          details: Json | null
+          id: string
+          resolved: boolean | null
+          severity: string
+          user_id: string | null
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          resolved?: boolean | null
+          severity?: string
+          user_id?: string | null
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          details?: Json | null
+          id?: string
+          resolved?: boolean | null
+          severity?: string
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -278,24 +352,175 @@ export type Database = {
         }
         Relationships: []
       }
+      waitlist_rate_limit: {
+        Row: {
+          created_at: string | null
+          id: string
+          ip_address: unknown
+          signup_count: number | null
+          updated_at: string | null
+          window_start: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          ip_address: unknown
+          signup_count?: number | null
+          updated_at?: string | null
+          window_start?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown
+          signup_count?: number | null
+          updated_at?: string | null
+          window_start?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      can_access_credentials: {
+        Args: { integration_id: string }
+        Returns: boolean
+      }
       check_voice_command_rate_limit: {
         Args: {
-          _user_id: string
           _max_commands?: number
+          _user_id: string
           _window_minutes?: number
         }
         Returns: boolean
       }
+      check_waitlist_rate_limit: {
+        Args: {
+          _ip_address: unknown
+          _max_signups?: number
+          _window_minutes?: number
+        }
+        Returns: boolean
+      }
+      cleanup_old_command_history: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      cleanup_waitlist_rate_limits: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      decrypt_credentials: {
+        Args: { encrypted_data: string }
+        Returns: Json
+      }
+      encrypt_credentials: {
+        Args: { credentials_data: Json }
+        Returns: string
+      }
+      get_encryption_key: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
+      get_user_integrations: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          app_name: string
+          created_at: string
+          credentials: Json
+          id: string
+          integration_type: string
+          is_active: boolean
+          updated_at: string
+        }[]
+      }
+      get_user_integrations_summary: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          app_name: string
+          created_at: string
+          has_credentials: boolean
+          id: string
+          integration_type: string
+          is_active: boolean
+          updated_at: string
+          user_id: string
+        }[]
+      }
+      get_user_integrations_summary_with_logging: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          app_name: string
+          created_at: string
+          has_credentials: boolean
+          id: string
+          integration_type: string
+          is_active: boolean
+          updated_at: string
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
-          _user_id: string
           _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
         }
+        Returns: boolean
+      }
+      insert_app_integration: {
+        Args: {
+          p_app_name: string
+          p_credentials: Json
+          p_integration_type: string
+          p_is_active?: boolean
+        }
+        Returns: string
+      }
+      log_credential_access: {
+        Args: {
+          p_access_type: string
+          p_error_message?: string
+          p_integration_id: string
+          p_success?: boolean
+        }
+        Returns: undefined
+      }
+      log_waitlist_signup: {
+        Args: {
+          _email: string
+          _error_message?: string
+          _ip_address: unknown
+          _success: boolean
+        }
+        Returns: undefined
+      }
+      log_waitlist_unauthorized_access: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      sanitize_command_text: {
+        Args: { command_text: string }
+        Returns: string
+      }
+      secure_waitlist_signup: {
+        Args: { _email: string; _name?: string; _source?: string }
+        Returns: Json
+      }
+      update_integration_credentials: {
+        Args: { p_credentials: Json; p_integration_id: string }
+        Returns: boolean
+      }
+      update_user_role: {
+        Args: {
+          new_role: Database["public"]["Enums"]["app_role"]
+          target_user_id: string
+        }
+        Returns: boolean
+      }
+      validate_credential_access: {
+        Args: { access_type?: string; integration_id: string }
         Returns: boolean
       }
     }

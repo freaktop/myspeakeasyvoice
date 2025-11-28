@@ -86,7 +86,10 @@ jobs:
         cd android
         chmod +x ./gradlew
         export GRADLE_OPTS="-Dorg.gradle.jvmargs=-Xmx2g -Dfile.encoding=UTF-8"
-        ./gradlew assembleDebug --no-daemon --stacktrace --info
+        # Show versions for debugging CI: helpful when debugging toolchain mismatches
+        java -version
+        ./gradlew -v
+        ./gradlew assembleDebug --no-daemon --stacktrace --info --console=plain
         
     - name: Upload APK artifact
       uses: actions/upload-artifact@v4
@@ -94,6 +97,16 @@ jobs:
         name: speakeasy-voice-control-debug
         path: android/app/build/outputs/apk/debug/app-debug.apk
         retention-days: 30
+
+    - name: Upload Gradle logs on failure
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: gradle-logs
+        path: |
+          android/build/**
+          ~/.gradle/daemon/**
+        retention-days: 7
         
     - name: Create release (if main branch)
       if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'

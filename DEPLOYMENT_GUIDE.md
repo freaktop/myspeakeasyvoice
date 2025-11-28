@@ -123,6 +123,8 @@ set JAVA_HOME=C:\Program Files\Java\jdk-21
 set PATH=%JAVA_HOME%\bin;%PATH%
 ```
 
+Tip: Use `scripts/install-jdk21.ps1` to automate JDK 21 installation on Windows (will attempt `winget`, `choco`, or `scoop`), or install manually and set `JAVA_HOME`.
+
 **macOS/Linux:**
 ```bash
 export JAVA_HOME=/path/to/jdk-21

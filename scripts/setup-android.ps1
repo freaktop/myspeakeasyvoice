@@ -23,3 +23,25 @@ try {
 } catch {
 	Write-Host "Unable to check Java version - ensure JDK 21 is installed and JAVA_HOME is set.";
 }
+
+# Check for Gradle wrapper & gradle.properties auto-download
+if (Test-Path "android\gradlew.bat") {
+	Write-Host "Gradle wrapper found: printing wrapper information..."
+	try {
+		& .\android\gradlew.bat -v
+	} catch {
+		Write-Host "Unable to run gradlew -v. Gradle wrapper might need to be updated or the wrapper download failed. See scripts/upgrade-gradle-wrapper.ps1"
+	}
+
+	# Check gradle.properties for toolchain auto-download
+	if (Test-Path "android\gradle.properties") {
+		$gp = Get-Content "android\gradle.properties" | Out-String
+		if ($gp -notmatch 'org.gradle.java.installations.auto-download=true') {
+			Write-Host "Consider enabling 'org.gradle.java.installations.auto-download=true' in android/gradle.properties to allow Gradle toolchain auto-downloads."
+		} else {
+			Write-Host "Gradle toolchain auto-download is enabled in android/gradle.properties."
+		}
+	}
+} else {
+	Write-Host "No Gradle wrapper found in android/ directory. Ensure you have a valid Android platform by running: npx cap add android or npx cap sync android"
+}

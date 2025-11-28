@@ -32,6 +32,6 @@ if (Get-Command winget -ErrorAction SilentlyContinue) {
 } else {
     Write-Host "winget not available. Please install a JDK 21 distribution manually (Temurin, Oracle, Corretto, OpenJDK) and set JAVA_HOME accordingly. Example (PowerShell):"
     Write-Host "setx JAVA_HOME 'C:\\Program Files\\Eclipse Adoptium\\jdk-21'"
-    Write-Host "setx PATH \"$env:JAVA_HOME\\bin;$env:PATH\""
+    Write-Host 'setx PATH "$env:JAVA_HOME\bin;$env:PATH"'
     exit 2
 }

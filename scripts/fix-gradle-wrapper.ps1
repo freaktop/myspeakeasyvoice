@@ -23,7 +23,7 @@ function Get-GradlePath {
 
 $gradleCmd = Get-GradlePath
 if (-not $gradleCmd) {
-    Write-Host "Gradle binary not found in PATH. Attempting to install with Chocolatey (may require admin)."
+    Write-Host "Gradle binary not found in PATH. Attempting to install with Chocolatey (may require admin), otherwise will try user-local download fallback."
     if (Get-Command choco -ErrorAction SilentlyContinue) {
         try {
             choco install gradle -y
@@ -34,6 +34,50 @@ if (-not $gradleCmd) {
     } else {
         Write-Host "Chocolatey not available. Try installing Gradle manually or run this script in an elevated shell."
     }
+    }
+
+    # If we couldn't install via choco, try a user-local gradle download into $env:USERPROFILE\gradle
+    if (-not $gradleCmd) {
+        Write-Host "Chocolatey install not available or failed. Trying user-local Gradle download fallback (no admin required)."
+        $dlTargets = @(
+            "https://services.gradle.org/distributions/gradle-$TargetVersion-bin.zip",
+            "https://services.gradle.org/distributions/gradle-$TargetVersion-all.zip",
+            "https://downloads.gradle.org/distributions/gradle-$TargetVersion-bin.zip",
+            "https://downloads.gradle.org/distributions/gradle-$TargetVersion-all.zip"
+        )
+        $downloaded = $false
+        $userGradleDir = Join-Path $env:USERPROFILE "gradle"
+        $zipPath = Join-Path $env:TEMP "gradle-$TargetVersion.zip"
+        foreach ($url in $dlTargets) {
+            try {
+                Write-Host "Trying to download Gradle from $url"
+                # Ensure TLS 1.2 for older PowerShells
+                [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+                Invoke-WebRequest -Uri $url -OutFile $zipPath -UseBasicParsing -TimeoutSec 120
+                $downloaded = $true
+                break
+            } catch {
+                Write-Host "Download failed from $url: $_"
+            }
+        }
+        if ($downloaded) {
+            try {
+                if (-Not (Test-Path -Path $userGradleDir)) { New-Item -ItemType Directory -Path $userGradleDir | Out-Null }
+                Expand-Archive -Path $zipPath -DestinationPath $userGradleDir -Force
+                # The zip extracts to gradle-$TargetVersion directory; find the bin path
+                $installedDir = Get-ChildItem -Directory $userGradleDir | Where-Object { $_.Name -match "gradle-$TargetVersion" } | Select-Object -First 1
+                if ($installedDir) {
+                    $binPath = Join-Path $installedDir.FullName "bin"
+                    Write-Host "Adding $binPath to PATH for this run only."
+                    $env:PATH = "$binPath;$env:PATH"
+                    $gradleCmd = "gradle"
+                }
+            } catch {
+                Write-Host "Failed to extract or configure user-local Gradle: $_"
+            } finally {
+                if (Test-Path -Path $zipPath) { Remove-Item -Force -Path $zipPath }
+            }
+        }
 }
 
 if (-not $gradleCmd) {

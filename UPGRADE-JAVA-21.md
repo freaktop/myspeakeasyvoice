@@ -22,7 +22,13 @@ This repository has been upgraded to target Java 21 (LTS) for Java compilation a
 3. (Optional) If you rely on a specific Gradle version, update `gradle/wrapper/gradle-wrapper.properties` to your chosen version and check with a test build.
 4. Run the Android builds locally using the wrapper (or local Gradle) to verify the full native build process.
 5. Verify and fix any lint/test issues found by CI.
-6. If the Gradle wrapper fails to download due to network restrictions or redirects, run `scripts/fix-gradle-wrapper.ps1` on a Windows machine that has network access and administrative rights. This script will attempt to install a local Gradle via Chocolatey and update the wrapper files (commit the resulting wrapper changes). Alternatively, run the wrapper update on a machine where the wrapper can fetch the distribution, then commit the updated wrapper files.
+6. If the Gradle wrapper fails to download due to network restrictions or redirects, you have a few options:
+
+- Run `scripts/fix-gradle-wrapper.ps1` on a Windows machine that has network access and administrative rights. This script attempts to install a local Gradle with Chocolatey and update the wrapper files (commit the resulting wrapper changes).
+- If you cannot run Chocolatey or don't have admin rights, download the Gradle distribution zip on a machine with network access and copy it to `%USERPROFILE%\.gradle\wrapper\dists\` on the build host, or run the wrapper update there and commit the updated wrapper files.
+- Use `scripts/install-gradle-zip.ps1 -ZipPath <path-to-zip>` to copy a pre-downloaded `gradle-8.16-all.zip` into your user's Gradle wrapper cache on Windows without admin rights (script will create the expected directory layout and copy it in).
+
+Once the wrapper can access the distribution (either from the cache or via network), re-run `./gradlew` to verify it works.
 
 If you prefer, I can continue and attempt to complete a full `generate_upgrade_plan` and automatic OpenRewrite/code modifications — however, this requires the ability to run the Gradle wrapper (which must be able to download Gradle distribution) or a locally installed Gradle binary present during the plan generation step.
 

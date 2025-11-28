@@ -143,4 +143,6 @@ For issues or questions:
 - **Permissions**: 8 total permissions required
 - **Background Services**: 1 foreground service for voice recognition
 
-The build process uses GitHub Actions with Android SDK 34, Java 17, and automatically handles signing with debug keys for easy installation and testing.
+The build process uses GitHub Actions with Android SDK 34, Java 21, and automatically handles signing with debug keys for easy installation and testing.
+
+Local setup: the `scripts/` folder includes helper scripts for setting up JDK 21 and syncing Capacitor native files on Windows: `scripts/install-jdk21.ps1` and `scripts/setup-android.ps1`.

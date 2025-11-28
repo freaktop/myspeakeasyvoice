@@ -1,0 +1,75 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.16.0'
+        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.25'
+        classpath 'com.google.gms:google-services:4.4.2'
+    }
+}
+
+// If the system JDK is older than 21, prefer the Gradle toolchain (auto-download) or
+// warn the user to install JDK 21; do not fail immediately so automatic toolchain
+// downloads can proceed when `org.gradle.java.installations.auto-download=true`.
+if (JavaVersion.current().compareTo(JavaVersion.VERSION_21) < 0) {
+    logger.warn("System JDK is older than Java 21. Gradle will prefer a Java 21 toolchain if available/auto-download is enabled. Set JAVA_HOME or org.gradle.java.home to a JDK 21 path for faster builds and better diagnostics.")
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    // Force Java 21 for all Java/Kotlin builds in main project — prefer Gradle toolchain
+    tasks.withType(JavaCompile).configureEach {
+        // Enforce the Java language level and use a Gradle toolchain to obtain the compiler
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+        javaCompiler.set(javaToolchains.compilerFor {
+            languageVersion.set(JavaLanguageVersion.of(21))
+        })
+    }
+
+    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+        kotlinOptions {
+            // Kotlin JVM target should match the Java language level
+            jvmTarget = "21"
+        }
+    }
+}
+
+// 🔧 Enforce Java 21 on all subprojects (Capacitor, etc.)
+subprojects {
+    afterEvaluate { project ->
+        if (project.hasProperty("android")) {
+            project.android {
+                compileOptions {
+                    sourceCompatibility JavaVersion.VERSION_21
+                    targetCompatibility JavaVersion.VERSION_21
+                }
+            }
+        }
+
+        tasks.withType(JavaCompile).configureEach {
+            sourceCompatibility = JavaVersion.VERSION_21
+            targetCompatibility = JavaVersion.VERSION_21
+            javaCompiler.set(javaToolchains.compilerFor {
+                languageVersion.set(JavaLanguageVersion.of(21))
+            })
+        }
+
+        tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+            kotlinOptions {
+                jvmTarget = "21"
+            }
+        }
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
+

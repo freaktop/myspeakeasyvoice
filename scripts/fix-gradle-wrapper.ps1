@@ -57,7 +57,7 @@ if (-not $gradleCmd) {
                 $downloaded = $true
                 break
             } catch {
-                Write-Host "Download failed from $url: $_"
+                Write-Host ([string]::Format("Download failed from {0}: {1}", $url, $_))
             }
         }
         if ($downloaded) {

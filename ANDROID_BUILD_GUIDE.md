@@ -143,4 +143,11 @@ For issues or questions:
 - **Permissions**: 8 total permissions required
 - **Background Services**: 1 foreground service for voice recognition
 
-The build process uses GitHub Actions with Android SDK 34, Java 17, and automatically handles signing with debug keys for easy installation and testing.
+The build process uses GitHub Actions with Android SDK 34 and recommends Java JDK 21 (LTS). The CI runs both Java 17 and Java 21 to verify compatibility while ensuring a smooth transition to Java 21.
+
+Local setup: the `scripts/` folder includes helper scripts for setting up JDK 21 and syncing Capacitor native files on Windows: `scripts/install-jdk21.ps1` and `scripts/setup-android.ps1`.
+
+Notes & Recommendations:
+- If you don't have JDK 21 installed locally, either use `scripts/install-jdk21.ps1` or configure `JAVA_HOME` to a Java 21 JDK installation.
+- Enable Gradle toolchain auto-download by setting `org.gradle.java.installations.auto-download=true` in `android/gradle.properties` to allow Gradle to fetch a suitable JDK automatically.
+- The CI workflow runs builds for Java 17 and Java 21 to validate backward compatibility; aim to use Java 21 locally to match the recommended environment.

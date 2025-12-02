@@ -1,0 +1,101 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+// Android config
+android {
+    namespace "com.lovable.routinevoicepilot"
+    compileSdk 36
+
+    defaultConfig {
+        applicationId "com.lovable.routinevoicepilot"
+        minSdk 23
+        final def var = targetSdk 35
+        versionCode 2
+        versionName "1.1.0"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        aaptOptions {
+            // Exclude unnecessary files from packaged assets
+            ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+        }
+    }
+
+    signingConfigs {
+        release {
+            // For production: store these in gradle.properties (not committed) or use environment variables
+            // Example in gradle.properties:
+            // RELEASE_STORE_FILE=path/to/your/release-key.jks
+            // RELEASE_STORE_PASSWORD=your_store_password
+            // RELEASE_KEY_ALIAS=your_key_alias
+            // RELEASE_KEY_PASSWORD=your_key_password
+            
+            if (project.hasProperty('RELEASE_STORE_FILE')) {
+                storeFile file(project.property('RELEASE_STORE_FILE'))
+                storePassword project.property('RELEASE_STORE_PASSWORD')
+                keyAlias project.property('RELEASE_KEY_ALIAS')
+                keyPassword project.property('RELEASE_KEY_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            if (project.hasProperty('RELEASE_STORE_FILE')) {
+                signingConfig signingConfigs.release
+            }
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
+
+    kotlinOptions {
+        // Kotlin JVM target should match the Java language level used by compileOptions
+        jvmTarget = "21"
+    }
+    lint {
+        abortOnError false
+    }
+
+}
+
+// Repositories for local Cordova plugins
+repositories {
+    flatDir {
+        dirs '../capacitor-cordova-android-plugins/src/main/libs', 'libs'
+    }
+}
+
+// Dependencies
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation "androidx.appcompat:appcompat:1.7.1"
+    implementation "androidx.coordinatorlayout:coordinatorlayout:1.3.0"
+    implementation "androidx.core:core-splashscreen:1.0.1"
+
+    implementation project(':capacitor-android')
+    implementation project(':capacitor-cordova-android-plugins')
+
+    testImplementation "junit:junit:4.13.2"
+    androidTestImplementation "androidx.test.ext:junit:1.3.0"
+    androidTestImplementation "androidx.test.espresso:espresso-core:3.7.0"
+}
+
+// Apply Capacitor build script
+apply from: 'capacitor.build.gradle'
+
+// Apply Google Services plugin if json exists
+try {
+    def servicesJSON = file('google-services.json')
+    if (servicesJSON.text) {
+        apply plugin: 'com.google.gms.google-services'
+    }
+} catch(Exception ignored) {
+    logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}

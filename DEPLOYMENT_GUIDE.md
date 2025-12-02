@@ -12,9 +12,9 @@
 ## 📱 Mobile App Deployment (Capacitor)
 
 ### Prerequisites
-- Node.js 18+ installed
-- For iOS: macOS with Xcode 14+
-- For Android: Android Studio with SDK 33+ and Java JDK 17+
+ - Node.js 18+ installed
+ - For iOS: macOS with Xcode 14+
+ - For Android: Android Studio with SDK 33+ and Java JDK 21+
 
 ### Step 1: Export & Clone Project
 1. Click **"Export to Github"** in Lovable interface
@@ -113,19 +113,21 @@ npx cap open ios
 
 ## ⚙️ Environment Setup for Java/Android
 
-### Install Java JDK 17
+### Install Java JDK 21
 1. Download from [Oracle JDK](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html)
 2. Install and set environment variables:
 
 **Windows:**
 ```cmd
-set JAVA_HOME=C:\Program Files\Java\jdk-17
+set JAVA_HOME=C:\Program Files\Java\jdk-21
 set PATH=%JAVA_HOME%\bin;%PATH%
 ```
 
+Tip: Use `scripts/install-jdk21.ps1` to automate JDK 21 installation on Windows (will attempt `winget`, `choco`, or `scoop`), or install manually and set `JAVA_HOME`.
+
 **macOS/Linux:**
 ```bash
-export JAVA_HOME=/path/to/jdk-17
+export JAVA_HOME=/path/to/jdk-21
 export PATH=$JAVA_HOME/bin:$PATH
 ```
 
@@ -216,9 +218,30 @@ export PATH=$JAVA_HOME/bin:$PATH
 - Verify HTTPS is enabled for production
 
 ### Android Build Errors
-- Verify Java 17 is installed and JAVA_HOME is set
+- Verify Java 21 is installed and JAVA_HOME is set
 - Update Android Studio and SDK components
 - Clean build: `cd android && ./gradlew clean`
+
+### Local setup helper scripts (Windows)
+
+To simplify a local Android build on Windows, we provide helper PowerShell scripts under `scripts/`:
+
+- `scripts/install-jdk21.ps1` — attempts to install Temurin JDK 21 using `winget` (if present), or prints instructions to install and set `JAVA_HOME`.
+- `scripts/setup-android.ps1` — installs node modules and runs `npx cap sync android` to pull native libs into the Android project.
+
+Usage from PowerShell (run as admin when installing JDK):
+
+```powershell
+# Attempt an automated JDK install via winget
+.\scripts\install-jdk21.ps1
+
+# Setup the android project (npm ci + sync)
+.\scripts\setup-android.ps1
+
+# Build android (after setting JAVA_HOME if necessary)
+cd android
+.\gradlew.bat clean assembleDebug --no-daemon --stacktrace --info
+```
 
 ### iOS Build Errors
 - Ensure Xcode is updated to latest version

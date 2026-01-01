@@ -2,8 +2,13 @@
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
-const SUPABASE_URL = "https://zofxbilhjehbtlbtence.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpvZnhiaWxoamVoYnRsYnRlbmNlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ1MDgxNzUsImV4cCI6MjA3MDA4NDE3NX0.i9pptWJqA9AMKw0MubKeqwxI14x5Pb1aLSmP2NXMgBc";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://zofxbilhjehbtlbtence.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpvZnhiaWxoamVoYnRsYnRlbmNlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQ1MDgxNzUsImV4cCI6MjA3MDA4NDE3NX0.i9pptWJqA9AMKw0MubKeqwxI14x5Pb1aLSmP2NXMgBc";
+
+// Use environment variables if available, otherwise fall back to defaults
+if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+  console.warn('Using default Supabase credentials. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY for production.');
+}
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
@@ -13,5 +18,6 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
+    detectSessionInUrl: true,
   }
 });

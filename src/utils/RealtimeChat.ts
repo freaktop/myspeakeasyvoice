@@ -35,9 +35,34 @@ export class RealtimeChat {
       // Initialize audio context
       this.audioContext = new AudioContext({ sampleRate: 24000 });
       
-      // Connect to our Supabase WebSocket relay
-      const wsUrl = `wss://zofxbilhjehbtlbtence.functions.supabase.co/functions/v1/realtime-chat`;
-      console.log("Connecting to WebSocket:", wsUrl);
+      // Connect to WebSocket - use VITE_WEBSOCKET_URL if set, otherwise fallback to Supabase function
+      const websocketUrl = import.meta.env.VITE_WEBSOCKET_URL;
+      let wsUrl: string;
+      
+      if (!websocketUrl) {
+        console.warn('VITE_WEBSOCKET_URL not set. Using fallback Supabase function URL.');
+        // Fallback to Supabase function if no env var is set
+        wsUrl = `wss://zofxbilhjehbtlbtence.functions.supabase.co/functions/v1/realtime-chat`;
+        console.log("Connecting to WebSocket (fallback):", wsUrl);
+      } else {
+        // Ensure we're not using functions/v1 URLs
+        if (websocketUrl.includes('/functions/v1/')) {
+          console.error('VITE_WEBSOCKET_URL should not use functions/v1. Please use a direct WebSocket URL.');
+          throw new Error('Invalid WebSocket URL format');
+        }
+        
+        // Get auth token if available
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        
+        wsUrl = websocketUrl;
+        if (token) {
+          const separator = wsUrl.includes('?') ? '&' : '?';
+          wsUrl = `${wsUrl}${separator}token=${encodeURIComponent(token)}`;
+        }
+        
+        console.log("Connecting to WebSocket:", wsUrl);
+      }
       
       this.ws = new WebSocket(wsUrl);
       

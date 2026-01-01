@@ -211,17 +211,32 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
             }
             case 'open_app': {
               const target = (systemCommand.target || '').toLowerCase();
-              if (['settings', 'setting'].includes(target)) {
-                window.location.assign('/settings');
-                success = true;
-              } else if (['home', 'dashboard'].includes(target)) {
-                window.location.assign('/');
-                success = true;
-              } else if (['routines', 'routine'].includes(target)) {
-                window.location.assign('/routines');
+              // Map common app names to routes or show helpful message
+              const appRoutes: Record<string, string> = {
+                'settings': '/settings',
+                'setting': '/settings',
+                'home': '/',
+                'dashboard': '/',
+                'routines': '/routines',
+                'routine': '/routines',
+                'commands': '/commands',
+                'command': '/commands',
+                'history': '/commands',
+                'profile': '/settings',
+              };
+              
+              const route = appRoutes[target];
+              if (route) {
+                window.location.assign(route);
                 success = true;
               } else {
-                // e.g., camera/messages: not supported on web
+                // For native apps like messages/chrome, show helpful message on web
+                console.warn(`App "${target}" is not available on web. This command works on Android devices.`);
+                toast({
+                  title: "App Not Available",
+                  description: `"${target}" is a native app feature. This works on Android devices with the mobile app installed.`,
+                  variant: "default"
+                });
                 success = false;
               }
               break;
@@ -354,14 +369,17 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
               for (let i = event.resultIndex; i < event.results.length; i++) {
                 if (event.results[i].isFinal) {
                   // Check confidence level (0-1)
-                  const confidence = event.results[i][0].confidence;
-                  console.log('🎯 Speech confidence:', confidence);
+                  // Note: Some browsers return 0 for confidence, so we accept any transcript with text
+                  const confidence = event.results[i][0].confidence || 0;
+                  const transcript = event.results[i][0].transcript;
+                  console.log('🎯 Speech confidence:', confidence, 'transcript:', transcript);
                   
-                  // Only process high-confidence results
-                  if (confidence > 0.7) {
-                    finalTranscript += event.results[i][0].transcript;
+                  // Process results with confidence > 0.3 OR if transcript has meaningful content
+                  // Some browsers return 0 confidence but still provide accurate transcripts
+                  if (confidence > 0.3 || (transcript && transcript.trim().length > 2)) {
+                    finalTranscript += transcript;
                   } else {
-                    console.log('❌ Low confidence speech ignored:', event.results[i][0].transcript, 'confidence:', confidence);
+                    console.log('❌ Low confidence speech ignored:', transcript, 'confidence:', confidence);
                   }
                 }
               }

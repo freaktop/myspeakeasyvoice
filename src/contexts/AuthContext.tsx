@@ -53,9 +53,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       });
       
-      // Return both data and error so we can check if user was immediately confirmed
-      return { data, error };
+      // Handle network/fetch errors
+      if (error) {
+        // Check if it's a network error
+        if (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('Failed to fetch')) {
+          return { 
+            data: null,
+            error: new Error('Network error: Unable to connect to authentication server. Please check your internet connection and try again.') 
+          };
+        }
+        return { data, error };
+      }
+      
+      return { data, error: null };
     } catch (error) {
+      // Handle unexpected errors
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      if (errorMessage.includes('fetch') || errorMessage.includes('network')) {
+        return { 
+          data: null,
+          error: new Error('Network error: Unable to connect to authentication server. Please check your internet connection and Supabase configuration.') 
+        };
+      }
       return { data: null, error: error as Error };
     }
   };
@@ -67,8 +86,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         password,
       });
       
-      return { error };
+      // Handle network/fetch errors
+      if (error) {
+        // Check if it's a network error
+        if (error.message.includes('fetch') || error.message.includes('network') || error.message.includes('Failed to fetch')) {
+          return { 
+            error: new Error('Network error: Unable to connect to authentication server. Please check your internet connection and try again.') 
+          };
+        }
+        return { error };
+      }
+      
+      return { error: null };
     } catch (error) {
+      // Handle unexpected errors
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+      if (errorMessage.includes('fetch') || errorMessage.includes('network')) {
+        return { 
+          error: new Error('Network error: Unable to connect to authentication server. Please check your internet connection and Supabase configuration.') 
+        };
+      }
       return { error: error as Error };
     }
   };

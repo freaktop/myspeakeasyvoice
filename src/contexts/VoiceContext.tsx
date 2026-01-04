@@ -351,6 +351,25 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
         setIsListening(true);
         isListeningRef.current = true;
         
+        // Request microphone permission first
+        try {
+          // Request microphone access explicitly
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          // Stop the stream immediately - we just needed permission
+          stream.getTracks().forEach(track => track.stop());
+          logger.log('✅ Microphone permission granted');
+        } catch (err: any) {
+          console.error('Microphone permission denied:', err);
+          setIsListening(false);
+          isListeningRef.current = false;
+          toast({
+            title: "Microphone Access Required",
+            description: "Please enable microphone permissions in your browser settings and try again.",
+            variant: "destructive"
+          });
+          return; // Exit early if permission denied
+        }
+        
         // Enhanced Web Speech API implementation
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
           const SpeechRecognition = (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
@@ -501,6 +520,7 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
             }
           }
         } else {
+        } else {
           // Enhanced fallback for browsers without Speech Recognition
           toast({
             title: "Voice Recognition Unavailable", 
@@ -510,8 +530,18 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
           setIsListening(false);
           isListeningRef.current = false;
         }
-      })();
-    }
+      } catch (error) {
+        // Catch any errors during permission request or recognition setup
+        console.error('Error starting voice recognition:', error);
+        setIsListening(false);
+        isListeningRef.current = false;
+        toast({
+          title: "Voice Recognition Failed",
+          description: "Unable to start voice recognition. Please check microphone permissions.",
+          variant: "destructive"
+        });
+      }
+    })();
   };
 
   const stopListening = () => {

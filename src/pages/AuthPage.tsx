@@ -186,6 +186,7 @@ const AuthPage = () => {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="pl-10"
+                        autoComplete="email"
                         required
                       />
                     </div>
@@ -202,6 +203,7 @@ const AuthPage = () => {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="pl-10"
+                        autoComplete="current-password"
                         required
                       />
                     </div>
@@ -251,6 +253,7 @@ const AuthPage = () => {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         className="pl-10"
+                        autoComplete="email"
                         required
                       />
                     </div>
@@ -267,6 +270,7 @@ const AuthPage = () => {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="pl-10"
+                        autoComplete="new-password"
                         required
                         minLength={6}
                       />

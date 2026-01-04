@@ -1,15 +1,16 @@
 import AccessibilityService from '@/plugins/AccessibilityService';
 import { toast } from '@/hooks/use-toast';
+import { logger } from './logger';
 
 export class AndroidAccessibilitySetup {
   static async requestPermissions(): Promise<boolean> {
     try {
-      console.log('Requesting Android accessibility permissions...');
+      logger.log('Requesting Android accessibility permissions...');
       
       // Check if accessibility service is already enabled
       const isEnabled = await AccessibilityService.isAccessibilityServiceEnabled();
       if (isEnabled.enabled) {
-        console.log('Accessibility service already enabled');
+        logger.log('Accessibility service already enabled');
         return true;
       }
 

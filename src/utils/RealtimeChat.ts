@@ -1,6 +1,7 @@
 // OpenAI Realtime API WebSocket client
 import { AudioRecorder, encodeAudioForAPI, playAudioData, clearAudioQueue } from './RealtimeAudio';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from './logger';
 
 export interface RealtimeMessage {
   id: string;
@@ -30,7 +31,7 @@ export class RealtimeChat {
 
   async connect(): Promise<void> {
     try {
-      console.log("Connecting to Realtime Chat...");
+      logger.log("Connecting to Realtime Chat...");
       
       // Initialize audio context
       this.audioContext = new AudioContext({ sampleRate: 24000 });
@@ -40,10 +41,10 @@ export class RealtimeChat {
       let wsUrl: string;
       
       if (!websocketUrl) {
-        console.warn('VITE_WEBSOCKET_URL not set. Using fallback Supabase function URL.');
+        logger.warn('VITE_WEBSOCKET_URL not set. Using fallback Supabase function URL.');
         // Fallback to Supabase function if no env var is set
         wsUrl = `wss://zofxbilhjehbtlbtence.functions.supabase.co/functions/v1/realtime-chat`;
-        console.log("Connecting to WebSocket (fallback):", wsUrl);
+        logger.log("Connecting to WebSocket (fallback):", wsUrl);
       } else {
         // Ensure we're not using functions/v1 URLs
         if (websocketUrl.includes('/functions/v1/')) {
@@ -61,13 +62,13 @@ export class RealtimeChat {
           wsUrl = `${wsUrl}${separator}token=${encodeURIComponent(token)}`;
         }
         
-        console.log("Connecting to WebSocket:", wsUrl);
+        logger.log("Connecting to WebSocket:", wsUrl);
       }
       
       this.ws = new WebSocket(wsUrl);
       
       this.ws.onopen = () => {
-        console.log("WebSocket connected");
+        logger.log("WebSocket connected");
         this.isConnected = true;
         this.options.onConnectionChange(true);
         this.startRecording();
@@ -75,7 +76,7 @@ export class RealtimeChat {
 
       this.ws.onmessage = async (event) => {
         const data = JSON.parse(event.data);
-        console.log("Received message type:", data.type);
+        logger.log("Received message type:", data.type);
         await this.handleMessage(data);
       };
 
@@ -85,7 +86,7 @@ export class RealtimeChat {
       };
 
       this.ws.onclose = (event) => {
-        console.log("WebSocket closed:", event.code, event.reason);
+        logger.log("WebSocket closed:", event.code, event.reason);
         this.isConnected = false;
         this.options.onConnectionChange(false);
         this.cleanup();
@@ -100,15 +101,15 @@ export class RealtimeChat {
   private async handleMessage(data: any) {
     switch (data.type) {
       case 'session.created':
-        console.log("Session created");
+        logger.log("Session created");
         break;
 
       case 'session.updated':
-        console.log("Session updated");
+        logger.log("Session updated");
         break;
 
       case 'response.created':
-        console.log("Response created");
+        logger.log("Response created");
         this.currentMessageId = data.response?.id || `msg_${Date.now()}`;
         this.currentTranscript = '';
         break;
@@ -142,7 +143,7 @@ export class RealtimeChat {
         break;
 
       case 'response.audio.done':
-        console.log("Audio response complete");
+        logger.log("Audio response complete");
         this.isSpeaking = false;
         this.options.onSpeakingChange(false);
         break;
@@ -164,12 +165,12 @@ export class RealtimeChat {
 
       case 'response.function_call_arguments.done':
         // Handle function calls
-        console.log("Function call:", data.name, data.arguments);
+        logger.log("Function call:", data.name, data.arguments);
         await this.handleFunctionCall(data.name, JSON.parse(data.arguments || '{}'));
         break;
 
       case 'input_audio_buffer.speech_started':
-        console.log("User started speaking");
+        logger.log("User started speaking");
         // Clear any ongoing AI audio
         clearAudioQueue();
         if (this.isSpeaking) {
@@ -179,7 +180,7 @@ export class RealtimeChat {
         break;
 
       case 'input_audio_buffer.speech_stopped':
-        console.log("User stopped speaking");
+        logger.log("User stopped speaking");
         break;
 
       case 'conversation.item.input_audio_transcription.completed':
@@ -201,12 +202,12 @@ export class RealtimeChat {
         break;
 
       default:
-        console.log("Unhandled message type:", data.type);
+        logger.log("Unhandled message type:", data.type);
     }
   }
 
   private async handleFunctionCall(name: string, args: any) {
-    console.log(`Executing function: ${name}`, args);
+    logger.log(`Executing function: ${name}`, args);
     
     let result = "Function executed successfully";
     
@@ -278,7 +279,7 @@ export class RealtimeChat {
 
   private async startRecording() {
     try {
-      console.log("Starting audio recording...");
+      logger.log("Starting audio recording...");
       this.recorder = new AudioRecorder((audioData) => {
         if (this.ws && this.ws.readyState === WebSocket.OPEN) {
           const encodedAudio = encodeAudioForAPI(audioData);
@@ -290,7 +291,7 @@ export class RealtimeChat {
       });
       
       await this.recorder.start();
-      console.log("Audio recording started");
+      logger.log("Audio recording started");
     } catch (error) {
       console.error("Error starting recording:", error);
       this.options.onError("Could not access microphone");
@@ -302,7 +303,7 @@ export class RealtimeChat {
       throw new Error('Not connected');
     }
 
-    console.log("Sending text message:", text);
+    logger.log("Sending text message:", text);
 
     // Add user message to conversation
     const userMessage: RealtimeMessage = {
@@ -335,7 +336,7 @@ export class RealtimeChat {
   }
 
   disconnect() {
-    console.log("Disconnecting...");
+    logger.log("Disconnecting...");
     this.cleanup();
     this.ws?.close();
   }

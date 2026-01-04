@@ -6,6 +6,7 @@ import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { App } from '@capacitor/app';
 import { Device } from '@capacitor/device';
 import AccessibilityService from '@/plugins/AccessibilityService';
+import { logger } from './logger';
 
 export interface SystemCommand {
   type: 'open_app' | 'send_text' | 'scroll' | 'click' | 'navigate' | 'system_action';
@@ -46,7 +47,7 @@ export class NativeVoiceCommands {
 
   async executeCommand(command: SystemCommand): Promise<boolean> {
     try {
-      console.log('Executing system command:', command);
+      logger.log('Executing system command:', command);
       
       // Check accessibility service for native Android capabilities
       if (this.isNative && this.deviceInfo?.platform === 'android') {
@@ -124,7 +125,7 @@ export class NativeVoiceCommands {
       const packageName = appPackages[appName.toLowerCase()] || appName;
       
       if (this.deviceInfo?.platform === 'android') {
-        console.log(`Opening Android app: ${packageName}`);
+        logger.log(`Opening Android app: ${packageName}`);
         const result = await AccessibilityService.openApp({ packageName });
         return result.success;
       } else if (this.deviceInfo?.platform === 'ios') {
@@ -258,7 +259,7 @@ export class NativeVoiceCommands {
 
   private async callNativeMethod(method: string, params: any): Promise<boolean> {
     if (!Capacitor.isNativePlatform()) {
-      console.log(`Native method called (web fallback): ${method}`, params);
+      logger.log(`Native method called (web fallback): ${method}`, params);
       return false;
     }
 
@@ -284,7 +285,7 @@ export class NativeVoiceCommands {
         
         case 'insertText':
           // This would require a custom plugin for text insertion
-          console.log('Text insertion requires custom plugin:', params.text);
+          logger.log('Text insertion requires custom plugin:', params.text);
           return false;
         
         case 'scroll':
@@ -318,7 +319,7 @@ export class NativeVoiceCommands {
           return false;
         
         default:
-          console.log(`Unsupported native method: ${method}`, params);
+          logger.log(`Unsupported native method: ${method}`, params);
           return false;
       }
     } catch (error) {
@@ -330,7 +331,7 @@ export class NativeVoiceCommands {
   // Enhanced voice command parsing with better accuracy
   parseVoiceCommand(command: string): SystemCommand | null {
     const lowerCommand = command.toLowerCase().trim();
-    console.log('Parsing command:', lowerCommand);
+    logger.log('Parsing command:', lowerCommand);
     
     // App opening commands - more flexible patterns
     if (lowerCommand.match(/\b(open|launch|start)\b/)) {
@@ -420,7 +421,7 @@ export class NativeVoiceCommands {
       return { type: 'click' };
     }
     
-    console.log('No command pattern matched for:', lowerCommand);
+    logger.log('No command pattern matched for:', lowerCommand);
     return null;
   }
 }

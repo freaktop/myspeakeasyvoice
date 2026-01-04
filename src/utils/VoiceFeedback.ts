@@ -1,4 +1,5 @@
 // Voice feedback system for providing audio responses to users
+import { logger } from './logger';
 
 export interface VoiceFeedbackSettings {
   enabled: boolean;
@@ -44,7 +45,7 @@ export class VoiceFeedbackService {
   private loadVoices(): void {
     if (this.synthesis) {
       this.voices = this.synthesis.getVoices();
-      console.log('Available voices:', this.voices.length);
+      logger.log('Available voices:', this.voices.length);
     }
   }
 

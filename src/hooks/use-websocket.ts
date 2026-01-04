@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
+import { logger } from '@/utils/logger';
 
 export type WebSocketMessage = {
   type: string;
@@ -52,7 +53,7 @@ export function useWebSocket(
       const ws = new WebSocket(wsUrl);
 
       ws.onopen = () => {
-        console.log('WebSocket connected');
+        logger.log('WebSocket connected');
         setStatus('connected');
         reconnectAttempts.current = 0;
       };

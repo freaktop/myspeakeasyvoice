@@ -9,6 +9,7 @@ import { backgroundVoiceService } from '@/utils/BackgroundVoiceService';
 import { voiceFeedback } from '@/utils/VoiceFeedback';
 import { Capacitor } from '@capacitor/core';
 import { useToast } from '@/hooks/use-toast';
+import { logger } from '@/utils/logger';
 
 interface VoiceSettings {
   wakePhrase: string;
@@ -100,21 +101,21 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
   }, [isNativeMode]);
 
   const handleVoiceCommand = async (command: string) => {
-    console.log('🎤 Voice command received:', command);
+    logger.log('🎤 Voice command received:', command);
     
     // Validate command before processing
     const trimmedCommand = command.trim().toLowerCase();
     
     // Ignore very short or meaningless commands
     if (trimmedCommand.length < 3) {
-      console.log('❌ Command too short, ignoring:', command);
+      logger.log('❌ Command too short, ignoring:', command);
       return;
     }
     
     // Ignore common background noise patterns
     const noisePatterns = ['hm', 'hmm', 'uh', 'um', 'ah', 'eh', 'oh', 'the', 'a', 'and', 'but', 'or'];
     if (noisePatterns.includes(trimmedCommand)) {
-      console.log('❌ Background noise detected, ignoring:', command);
+      logger.log('❌ Background noise detected, ignoring:', command);
       return;
     }
     
@@ -123,7 +124,7 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
     const hasActionWord = actionWords.some(word => trimmedCommand.includes(word));
     
     if (!hasActionWord) {
-      console.log('❌ No action word detected, ignoring:', command);
+      logger.log('❌ No action word detected, ignoring:', command);
       return;
     }
     
@@ -131,14 +132,14 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
     
     // Detect if this is a system command first
     const parsed = nativeVoiceCommands.parseVoiceCommand(command);
-    console.log('🔍 Parsed command:', parsed);
+    logger.log('🔍 Parsed command:', parsed);
 
     // Try to execute as system command when applicable
     const executed = await executeSystemCommand(command);
-    console.log('✅ System command executed:', executed);
+    logger.log('✅ System command executed:', executed);
     
     if (executed) {
-      console.log('🎯 System command successful:', command);
+      logger.log('🎯 System command successful:', command);
       toast({
         title: "Command Executed",
         description: `System command: ${command}`,
@@ -154,7 +155,7 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
 
     // If it looked like a system command but couldn't run (e.g., unsupported on web), don't fallback silently
     if (parsed) {
-      console.log('⚠️ System command parsed but failed to execute:', parsed);
+      logger.log('⚠️ System command parsed but failed to execute:', parsed);
       const errorMessage = "That system command requires the mobile app or extra permissions.";
       toast({
         title: "Not available here",
@@ -171,14 +172,14 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
     }
 
     // Fall back to regular voice command processing
-    console.log('🔄 Falling back to regular command processing');
+    logger.log('🔄 Falling back to regular command processing');
     await processRegularCommand(command);
   };
 
   const executeSystemCommand = async (command: string): Promise<boolean> => {
-    console.log('Executing system command:', command);
+    logger.log('Executing system command:', command);
     const systemCommand = nativeVoiceCommands.parseVoiceCommand(command);
-    console.log('Parsed system command:', systemCommand);
+    logger.log('Parsed system command:', systemCommand);
     
     if (systemCommand) {
       let success = false;
@@ -251,7 +252,7 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
         }
       }
 
-      console.log('System command execution result:', success);
+      logger.log('System command execution result:', success);
       
       if (user) {
         const responseTime = Math.floor(Math.random() * 500) + 50; // 50-550ms
@@ -267,7 +268,7 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
       return success;
     }
     
-    console.log('No system command found for:', command);
+    logger.log('No system command found for:', command);
     return false;
   };
 
@@ -372,24 +373,24 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
                   // Note: Some browsers return 0 for confidence, so we accept any transcript with text
                   const confidence = event.results[i][0].confidence || 0;
                   const transcript = event.results[i][0].transcript;
-                  console.log('🎯 Speech confidence:', confidence, 'transcript:', transcript);
+                  logger.log('🎯 Speech confidence:', confidence, 'transcript:', transcript);
                   
                   // Process results with confidence > 0.3 OR if transcript has meaningful content
                   // Some browsers return 0 confidence but still provide accurate transcripts
                   if (confidence > 0.3 || (transcript && transcript.trim().length > 2)) {
                     finalTranscript += transcript;
                   } else {
-                    console.log('❌ Low confidence speech ignored:', transcript, 'confidence:', confidence);
+                    logger.log('❌ Low confidence speech ignored:', transcript, 'confidence:', confidence);
                   }
                 }
               }
               const transcript = finalTranscript.trim();
-              console.log('🎙️ Raw transcript received:', transcript);
+              logger.log('🎙️ Raw transcript received:', transcript);
               if (transcript && isListeningRef.current) {
-                console.log('🎯 Processing voice command:', transcript);
+                logger.log('🎯 Processing voice command:', transcript);
                 handleVoiceCommand(transcript);
               } else {
-                console.log('❌ Transcript ignored - empty or not listening');
+                logger.log('❌ Transcript ignored - empty or not listening');
               }
             };
             
@@ -411,7 +412,7 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
               
               // Handle aborted errors - don't restart automatically to avoid loops
               if (event.error === 'aborted') {
-                console.log('Speech recognition aborted, stopping auto-restart');
+                logger.log('Speech recognition aborted, stopping auto-restart');
                 setIsListening(false);
                 isListeningRef.current = false;
                 toast({
@@ -424,14 +425,14 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
               
               // Handle network errors with limited retries
               if (event.error === 'network') {
-                console.log('Network error - will attempt restart after delay');
+                logger.log('Network error - will attempt restart after delay');
                 // Don't show toast for network errors, just log
                 setTimeout(() => {
                   if (isListeningRef.current && !recognitionActiveRef.current) {
                     try { 
                       recognition.start(); 
                     } catch (e) { 
-                      console.log('Could not restart after network error:', e);
+                      logger.log('Could not restart after network error:', e);
                       setIsListening(false);
                       isListeningRef.current = false;
                     }
@@ -441,14 +442,14 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
               
               // Handle no-speech errors quietly
               if (event.error === 'no-speech') {
-                console.log('No speech detected, continuing to listen...');
+                logger.log('No speech detected, continuing to listen...');
                 // Don't restart immediately for no-speech
                 return;
               }
             };
             
             recognition.onend = () => {
-              console.log('Speech recognition session ended');
+              logger.log('Speech recognition session ended');
               recognitionActiveRef.current = false;
               
               // Auto-restart if still supposed to be listening
@@ -457,9 +458,9 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
                   if (isListeningRef.current && !recognitionActiveRef.current) {
                     try {
                       recognition.start();
-                      console.log('Restarting voice recognition...');
+                      logger.log('Restarting voice recognition...');
                     } catch (e) {
-                      console.log('Could not restart recognition:', e);
+                      logger.log('Could not restart recognition:', e);
                       setIsListening(false);
                       isListeningRef.current = false;
                     }
@@ -486,7 +487,7 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
               }
             } catch (e: any) {
               if (String(e?.message || e).includes('already started')) {
-                console.debug('Recognition already running');
+                logger.debug('Recognition already running');
               } else {
                 console.error('Failed to start recognition:', e);
                 toast({
@@ -604,7 +605,7 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
 
   const enableContinuousListening = () => {
     // Disable continuous listening for now to prevent errors
-    console.log('Continuous listening disabled to prevent errors');
+    logger.log('Continuous listening disabled to prevent errors');
     return;
   };
 

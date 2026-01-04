@@ -1,5 +1,6 @@
 import { Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
+import { logger } from './logger';
 
 export class BackgroundVoiceService {
   private static instance: BackgroundVoiceService;
@@ -31,7 +32,7 @@ export class BackgroundVoiceService {
   private initializeNativeSpeechRecognition() {
     // This would require implementing a native plugin for continuous speech recognition
     // For now, we'll simulate it
-    console.log('Native speech recognition initialized');
+    logger.log('Native speech recognition initialized');
   }
 
   private initializeWebSpeechRecognition() {
@@ -44,7 +45,7 @@ export class BackgroundVoiceService {
       this.recognition.lang = 'en-US';
       
       this.recognition.onstart = () => {
-        console.log('Voice recognition started');
+        logger.log('Voice recognition started');
         this.isListening = true;
       };
       
@@ -52,7 +53,7 @@ export class BackgroundVoiceService {
         const lastResultIndex = event.results.length - 1;
         const transcript = event.results[lastResultIndex][0].transcript.trim();
         
-        console.log('Voice command received:', transcript);
+        logger.log('Voice command received:', transcript);
         
         // Check for wake phrase
         if (this.containsWakePhrase(transcript)) {
@@ -77,7 +78,7 @@ export class BackgroundVoiceService {
       };
       
       this.recognition.onend = () => {
-        console.log('Voice recognition ended');
+        logger.log('Voice recognition ended');
         // Restart recognition for continuous listening
         if (this.isListening) {
           setTimeout(() => {
@@ -142,7 +143,7 @@ export class BackgroundVoiceService {
       // For native apps, also request background execution permission
       if (Capacitor.isNativePlatform()) {
         // This would require implementing custom permission requests
-        console.log('Requesting background permissions...');
+        logger.log('Requesting background permissions...');
       }
       
       return true;
@@ -155,7 +156,7 @@ export class BackgroundVoiceService {
   private async startNativeBackgroundService() {
     // This would start a native background service for speech recognition
     // The implementation would differ between Android and iOS
-    console.log('Starting native background voice service...');
+    logger.log('Starting native background voice service...');
     
     // For Android: Start a foreground service with speech recognition
     // For iOS: Use background processing tasks (limited time)
@@ -171,7 +172,7 @@ export class BackgroundVoiceService {
 
   private async startAndroidBackgroundService() {
     // Android allows foreground services for speech recognition
-    console.log('Starting Android foreground service for voice recognition...');
+    logger.log('Starting Android foreground service for voice recognition...');
     
     // This would call a native Android plugin to:
     // 1. Start a foreground service with a persistent notification
@@ -181,7 +182,7 @@ export class BackgroundVoiceService {
 
   private async startIOSBackgroundProcessing() {
     // iOS has stricter background limitations
-    console.log('Starting iOS background voice processing...');
+    logger.log('Starting iOS background voice processing...');
     
     // This would implement:
     // 1. Background app refresh

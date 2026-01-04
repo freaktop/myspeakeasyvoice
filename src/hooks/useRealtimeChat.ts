@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { RealtimeChat, RealtimeMessage } from '@/utils/RealtimeChat';
 import { useToast } from '@/hooks/use-toast';
+import { logger } from '@/utils/logger';
 
 export const useRealtimeChat = () => {
   const [messages, setMessages] = useState<RealtimeMessage[]>([]);
@@ -13,17 +14,17 @@ export const useRealtimeChat = () => {
   const chatRef = useRef<RealtimeChat | null>(null);
 
   const addMessage = useCallback((message: RealtimeMessage) => {
-    console.log("Adding message:", message);
+    logger.log("Adding message:", message);
     setMessages(prev => [...prev, message]);
   }, []);
 
   const handleSpeakingChange = useCallback((speaking: boolean) => {
-    console.log("Speaking changed:", speaking);
+    logger.log("Speaking changed:", speaking);
     setIsSpeaking(speaking);
   }, []);
 
   const handleConnectionChange = useCallback((connected: boolean) => {
-    console.log("Connection changed:", connected);
+    logger.log("Connection changed:", connected);
     setIsConnected(connected);
     setIsLoading(false);
     
@@ -53,13 +54,13 @@ export const useRealtimeChat = () => {
 
   const connect = useCallback(async () => {
     if (chatRef.current?.connected) {
-      console.log("Already connected");
+      logger.log("Already connected");
       return;
     }
 
     try {
       setIsLoading(true);
-      console.log("Initializing realtime chat...");
+      logger.log("Initializing realtime chat...");
       
       chatRef.current = new RealtimeChat({
         onMessage: addMessage,
@@ -77,7 +78,7 @@ export const useRealtimeChat = () => {
   }, [addMessage, handleSpeakingChange, handleConnectionChange, handleError]);
 
   const disconnect = useCallback(() => {
-    console.log("Disconnecting realtime chat...");
+    logger.log("Disconnecting realtime chat...");
     chatRef.current?.disconnect();
     chatRef.current = null;
     setMessages([]);
@@ -106,7 +107,7 @@ export const useRealtimeChat = () => {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      console.log("Cleaning up realtime chat...");
+      logger.log("Cleaning up realtime chat...");
       chatRef.current?.disconnect();
     };
   }, []);

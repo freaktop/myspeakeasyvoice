@@ -40,7 +40,9 @@ const HomePage = () => {
       icon: Zap,
       label: 'Quick Actions',
       description: 'Launch apps & shortcuts',
-      action: () => console.log('Quick actions'),
+      action: () => {
+        if (import.meta.env.DEV) console.log('Quick actions');
+      },
     },
     {
       icon: Plus,

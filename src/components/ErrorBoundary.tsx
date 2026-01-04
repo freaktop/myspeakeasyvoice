@@ -22,7 +22,11 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    if (import.meta.env.DEV) {
+      console.error('ErrorBoundary caught an error:', error, errorInfo);
+    }
+    // In production, send to error tracking service
+    // Example: Sentry.captureException(error, { contexts: { react: errorInfo } });
   }
 
   private handleReload = () => {
@@ -51,7 +55,7 @@ class ErrorBoundary extends Component<Props, State> {
                 An unexpected error occurred. This has been logged and we'll work on fixing it.
               </p>
               
-              {process.env.NODE_ENV === 'development' && this.state.error && (
+              {import.meta.env.DEV && this.state.error && (
                 <details className="bg-muted p-3 rounded-lg text-xs">
                   <summary className="cursor-pointer font-medium mb-2">Error Details</summary>
                   <pre className="whitespace-pre-wrap text-xs">

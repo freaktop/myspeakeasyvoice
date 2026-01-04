@@ -1,4 +1,5 @@
 // Audio recording and encoding utilities for OpenAI Realtime API
+import { logger } from './logger';
 
 export class AudioRecorder {
   private stream: MediaStream | null = null;
@@ -10,7 +11,7 @@ export class AudioRecorder {
 
   async start() {
     try {
-      console.log("Starting audio recording...");
+      logger.log("Starting audio recording...");
       this.stream = await navigator.mediaDevices.getUserMedia({
         audio: {
           sampleRate: 24000,
@@ -36,7 +37,7 @@ export class AudioRecorder {
       this.source.connect(this.processor);
       this.processor.connect(this.audioContext.destination);
       
-      console.log("Audio recording started successfully");
+      logger.log("Audio recording started successfully");
     } catch (error) {
       console.error('Error accessing microphone:', error);
       throw error;
@@ -44,7 +45,7 @@ export class AudioRecorder {
   }
 
   stop() {
-    console.log("Stopping audio recording...");
+    logger.log("Stopping audio recording...");
     if (this.source) {
       this.source.disconnect();
       this.source = null;
@@ -86,7 +87,7 @@ export const encodeAudioForAPI = (float32Array: Float32Array): string => {
 
 // Create WAV file from PCM data for playback
 export const createWavFromPCM = (pcmData: Uint8Array): Uint8Array => {
-  console.log("Creating WAV from PCM data, length:", pcmData.length);
+  logger.log("Creating WAV from PCM data, length:", pcmData.length);
   
   // Convert bytes to 16-bit samples (little endian)
   const int16Data = new Int16Array(pcmData.length / 2);
@@ -146,7 +147,7 @@ export class AudioQueue {
   }
 
   async addToQueue(audioData: Uint8Array) {
-    console.log("Adding audio to queue, size:", audioData.length);
+    logger.log("Adding audio to queue, size:", audioData.length);
     this.queue.push(audioData);
     if (!this.isPlaying) {
       await this.playNext();
@@ -156,13 +157,13 @@ export class AudioQueue {
   private async playNext() {
     if (this.queue.length === 0) {
       this.isPlaying = false;
-      console.log("Audio queue empty, stopping playback");
+      logger.log("Audio queue empty, stopping playback");
       return;
     }
 
     this.isPlaying = true;
     const audioData = this.queue.shift()!;
-    console.log("Playing next audio chunk, size:", audioData.length);
+    logger.log("Playing next audio chunk, size:", audioData.length);
 
     try {
       const wavData = createWavFromPCM(audioData);
@@ -173,7 +174,7 @@ export class AudioQueue {
       source.connect(this.audioContext.destination);
       
       source.onended = () => {
-        console.log("Audio chunk finished");
+        logger.log("Audio chunk finished");
         this.playNext();
       };
       
@@ -185,7 +186,7 @@ export class AudioQueue {
   }
 
   clear() {
-    console.log("Clearing audio queue");
+    logger.log("Clearing audio queue");
     this.queue = [];
     this.isPlaying = false;
   }

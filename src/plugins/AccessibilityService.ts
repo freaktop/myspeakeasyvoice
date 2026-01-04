@@ -1,4 +1,5 @@
 import { registerPlugin } from '@capacitor/core';
+import { logger } from '@/utils/logger';
 
 export interface AccessibilityServicePlugin {
   requestAccessibilityPermission(): Promise<{ granted: boolean }>;
@@ -16,7 +17,7 @@ export interface AccessibilityServicePlugin {
 const AccessibilityService = registerPlugin<AccessibilityServicePlugin>('AccessibilityService', {
   web: () => ({
     async requestAccessibilityPermission() {
-      console.log('Web: Accessibility permission not needed');
+      logger.log('Web: Accessibility permission not needed');
       return { granted: true };
     },
     async isAccessibilityServiceEnabled() {

@@ -13,5 +13,6 @@ export const ENV = {
   SUPABASE_ANON_KEY: required("VITE_SUPABASE_ANON_KEY"),
   WEBSOCKET_URL: (import.meta.env.VITE_WEBSOCKET_URL as string | undefined)?.trim(),
   API_URL: (import.meta.env.VITE_API_URL as string | undefined)?.trim(),
+  BUILD_SHIP_API_URL: (import.meta.env.VITE_BUILDSHIP_API_URL as string | undefined)?.trim(),
 };
 

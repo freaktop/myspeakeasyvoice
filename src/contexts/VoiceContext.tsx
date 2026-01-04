@@ -10,6 +10,8 @@ import { voiceFeedback } from '@/utils/VoiceFeedback';
 import { Capacitor } from '@capacitor/core';
 import { useToast } from '@/hooks/use-toast';
 import { logger } from '@/utils/logger';
+import { buildShipService, BuildShipResponse } from '@/utils/BuildShipService';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 interface VoiceSettings {
   wakePhrase: string;
@@ -47,11 +49,13 @@ interface VoiceContextType {
 const VoiceContext = createContext<VoiceContextType | undefined>(undefined);
 
 export const VoiceProvider = ({ children }: { children: ReactNode }) => {
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const { profile, updateProfile } = useProfile();
   const { commands, addCommand } = useVoiceCommands();
   const { history, addHistoryEntry } = useCommandHistory();
   const { toast } = useToast();
+  const location = useLocation();
+  const navigate = useNavigate();
   
   const [isListening, setIsListening] = useState(false);
   const [lastCommand, setLastCommand] = useState('');
@@ -273,6 +277,215 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const processRegularCommand = async (command: string) => {
+    if (!user) {
+      logger.log('⚠️ Cannot process command: user not authenticated');
+      return;
+    }
+
+    // Try BuildShip first if available
+    if (buildShipService.isAvailable()) {
+      try {
+        // Get current screen name from location
+        const screenName = getScreenNameFromPath(location.pathname);
+        
+        // Get recent commands for context
+        const recentCommands = commandHistory
+          .slice(0, 5)
+          .map(item => item.command);
+
+        const buildShipResponse = await buildShipService.processCommand(
+          user.id,
+          command,
+          {
+            screen: screenName,
+            app_mode: isNativeMode ? 'mobile' : 'web',
+            recent_commands: recentCommands,
+          }
+        );
+
+        if (buildShipResponse) {
+          await handleBuildShipResponse(buildShipResponse, command);
+          return;
+        }
+      } catch (error: any) {
+        logger.log('❌ BuildShip processing failed, falling back:', error.message);
+      }
+    }
+
+    // Fallback to local command processing if BuildShip is not available or fails
+    logger.log('🔄 Using fallback command processing');
+    await processFallbackCommand(command);
+  };
+
+  /**
+   * Get screen name from current path
+   */
+  const getScreenNameFromPath = (path: string): string => {
+    if (path === '/') return 'Home';
+    if (path === '/settings') return 'Settings';
+    if (path === '/routines') return 'Routines';
+    if (path === '/commands' || path === '/command-log') return 'CommandLog';
+    if (path === '/voice-training') return 'VoiceTraining';
+    if (path === '/onboarding') return 'Onboarding';
+    return 'Home';
+  };
+
+  /**
+   * Handle BuildShip response and execute client actions
+   */
+  const handleBuildShipResponse = async (
+    response: BuildShipResponse,
+    originalCommand: string
+  ) => {
+    logger.log('🎯 Processing BuildShip response:', {
+      intent: response.intent,
+      confidence: response.confidence,
+      action: response.client_action.type,
+    });
+
+    // Log command to history
+    if (user) {
+      await addHistoryEntry({
+        command_text: originalCommand,
+        action_performed: response.assistant_reply || `Intent: ${response.intent}`,
+        context_mode: currentMode,
+        success: response.confidence > 0.5,
+        response_time_ms: 0, // BuildShip handles timing
+      });
+    }
+
+    // Show assistant reply
+    if (response.assistant_reply) {
+      toast({
+        title: response.confidence > 0.7 ? "Command Executed" : "Command Understood",
+        description: response.assistant_reply,
+        variant: response.confidence > 0.5 ? "default" : "destructive",
+      });
+    }
+
+    // Execute client action
+    await executeClientAction(response.client_action, response.intent, response.entities);
+
+    // Provide voice feedback
+    if (profile?.voice_feedback_enabled && response.assistant_reply) {
+      await voiceFeedback.speakCommandConfirmation(originalCommand, response.assistant_reply);
+    }
+  };
+
+  /**
+   * Execute client actions from BuildShip response
+   */
+  const executeClientAction = async (
+    action: BuildShipResponse['client_action'],
+    intent: BuildShipResponse['intent'],
+    entities: BuildShipResponse['entities']
+  ) => {
+    switch (action.type) {
+      case 'NAVIGATE':
+        await handleNavigateAction(action.payload, intent);
+        break;
+      
+      case 'RUN_ROUTINE':
+        await handleRunRoutineAction(action.payload, entities);
+        break;
+      
+      case 'SAVE_NOTE':
+        await handleSaveNoteAction(action.payload, entities);
+        break;
+      
+      case 'NONE':
+        // No action needed, just show the assistant reply
+        break;
+      
+      default:
+        logger.log('⚠️ Unknown client action type:', action.type);
+    }
+  };
+
+  /**
+   * Handle navigation actions
+   */
+  const handleNavigateAction = async (
+    payload: Record<string, any>,
+    intent: BuildShipResponse['intent']
+  ) => {
+    // Map intents to routes
+    const routeMap: Record<string, string> = {
+      'OPEN_SETTINGS': '/settings',
+      'GO_HOME': '/',
+      'OPEN_ROUTINES': '/routines',
+      'SHOW_COMMAND_LOG': '/commands',
+    };
+
+    const route = routeMap[intent] || payload.route || payload.path;
+    
+    if (route) {
+      logger.log('🧭 Navigating to:', route);
+      navigate(route);
+    } else if (intent === 'SIGN_OUT') {
+      // Handle sign out
+      logger.log('🚪 Sign out requested');
+      await signOut();
+      navigate('/auth');
+    }
+  };
+
+  /**
+   * Handle routine execution
+   */
+  const handleRunRoutineAction = async (
+    payload: Record<string, any>,
+    entities: BuildShipResponse['entities']
+  ) => {
+    const routineName = entities.routine_name || payload.routine_name;
+    
+    if (routineName) {
+      logger.log('🎬 Running routine:', routineName);
+      toast({
+        title: "Routine Started",
+        description: `Executing routine: ${routineName}`,
+      });
+      
+      // TODO: Implement actual routine execution
+      // This would need to fetch the routine from the database and execute its steps
+    } else {
+      logger.log('⚠️ Routine name not provided');
+      toast({
+        title: "Routine Not Found",
+        description: "Please specify which routine to run",
+        variant: "destructive",
+      });
+    }
+  };
+
+  /**
+   * Handle note saving
+   */
+  const handleSaveNoteAction = async (
+    payload: Record<string, any>,
+    entities: BuildShipResponse['entities']
+  ) => {
+    const note = entities.note || payload.note;
+    
+    if (note) {
+      logger.log('📝 Saving note:', note);
+      
+      // TODO: Implement note saving to database
+      // This could be stored in a notes table or command history with a special flag
+      
+      toast({
+        title: "Note Saved",
+        description: `Saved: ${note}`,
+      });
+    } else {
+      logger.log('⚠️ Note content not provided');
+    }
+  };
+
+  /**
+   * Fallback command processing when BuildShip is unavailable
+   */
+  const processFallbackCommand = async (command: string) => {
     // Enhanced simulation with context-aware commands
     const personalCommands = [
       { text: 'Play my workout playlist', action: 'Starting workout music' },

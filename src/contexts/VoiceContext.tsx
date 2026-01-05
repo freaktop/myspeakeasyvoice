@@ -722,16 +722,26 @@ export const VoiceProvider = ({ children }: { children: ReactNode }) => {
         }
         } catch (err: any) {
           // Catch any errors during permission request or recognition setup
-          console.error('❌ Error starting voice recognition:', err);
+          logger.log('❌ Error starting voice recognition:', err);
           setIsListening(false);
           isListeningRef.current = false;
           
           let errorMessage = "Unable to start voice recognition. Please check microphone permissions.";
           if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-            errorMessage = "Microphone access was denied. Please click the lock icon in your browser's address bar and allow microphone access.";
-          } else if (err.name === 'NotFoundError') {
+            errorMessage = "Microphone access was denied. Please click the lock icon (🔒) in your browser's address bar and allow microphone access, then refresh the page.";
+          } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
             errorMessage = "No microphone found. Please connect a microphone and try again.";
+          } else if (err.name === 'NotSupportedError' || err.name === 'NotReadableError') {
+            errorMessage = "Microphone is being used by another application. Please close other apps using the microphone and try again.";
+          } else if (err.message?.includes('getUserMedia is not supported')) {
+            errorMessage = "Your browser doesn't support microphone access. Please use Chrome, Edge, or Firefox.";
           }
+          
+          logger.log('Error details:', {
+            name: err.name,
+            message: err.message,
+            stack: err.stack
+          });
           
           toast({
             title: "Microphone Access Required",

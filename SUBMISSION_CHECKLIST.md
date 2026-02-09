@@ -8,7 +8,8 @@ Quick reference checklist for submitting Routine Voice Pilot to app stores.
 - [x] Java 21 upgrade complete
 - [x] App builds successfully
 - [x] Version updated to 1.1.0 (versionCode 2)
-- [ ] All features tested on emulator/device
+- [x] Testing infrastructure setup complete
+- [ ] All features tested on emulator/device (see TESTING_GUIDE.md)
 - [ ] Performance & battery optimized
 - [ ] Memory leaks checked
 - [ ] No crashes or critical bugs

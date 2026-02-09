@@ -1,3 +1,4 @@
+/// <reference types="https://deno.land/x/deploy@1.8.0/types.d.ts" />
 import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
@@ -6,7 +7,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-serve(async (req) => {
+serve(async (req: Request) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -31,6 +32,10 @@ serve(async (req) => {
   }
 
   const openAIUrl = `wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-10-01`;
+  const openAIHeaders = {
+    'Authorization': `Bearer ${openAIApiKey}`,
+    'OpenAI-Beta': 'realtime=v1'
+  };
   console.log("Connecting to OpenAI at:", openAIUrl);
   
   let openAISocket: WebSocket | null = null;
@@ -39,13 +44,19 @@ serve(async (req) => {
   socket.onopen = () => {
     console.log("Client WebSocket connection established");
     
-    // Connect to OpenAI
-    openAISocket = new WebSocket(openAIUrl, undefined, {
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'OpenAI-Beta': 'realtime=v1'
-      }
+    // Connect to OpenAI using fetch to upgrade with custom headers
+    fetch(openAIUrl.replace('wss://', 'https://'), {
+      headers: openAIHeaders,
+    }).catch(() => {
+      // Create WebSocket connection with protocols array containing auth
+      openAISocket = new WebSocket(openAIUrl, [
+        `bearer.${openAIApiKey}`,
+        'realtime-v1'
+      ]);
     });
+    
+    // Standard WebSocket connection (headers must be sent via URL params or after connection)
+    openAISocket = new WebSocket(openAIUrl);
 
     openAISocket.onopen = () => {
       console.log("Connected to OpenAI Realtime API");
@@ -155,7 +166,7 @@ Be natural, friendly, and conversational. Keep responses concise but helpful. Wh
     };
   };
 
-  socket.onmessage = (event) => {
+  socket.onmessage = (event: MessageEvent) => {
     // Forward client messages to OpenAI
     if (openAISocket && openAISocket.readyState === WebSocket.OPEN) {
       const data = JSON.parse(event.data);
@@ -170,7 +181,7 @@ Be natural, friendly, and conversational. Keep responses concise but helpful. Wh
     }
   };
 
-  socket.onerror = (error) => {
+  socket.onerror = (error: Event) => {
     console.error("Client WebSocket error:", error);
   };
 

@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">routine-voice-pilot</string>
-    <string name="title_activity_main">routine-voice-pilot</string>
+    <string name="app_name">SpeakEasy Voice Control</string>
+    <string name="title_activity_main">SpeakEasy Voice Control</string>
     <string name="package_name">com.lovable.routinevoicepilot</string>
     <string name="custom_url_scheme">com.lovable.routinevoicepilot</string>
     <string name="greeting">Hello from MainActivity!</string>

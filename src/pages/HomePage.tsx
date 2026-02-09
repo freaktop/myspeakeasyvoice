@@ -7,6 +7,7 @@ import RealtimeVoiceInterface from '@/components/RealtimeVoiceInterface';
 import { useVoice } from '@/contexts/VoiceContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,14 +19,9 @@ import { Zap, Plus, History, Volume2, LogOut, Smartphone, Settings, Mic, Brain }
 
 const HomePage = () => {
   const { 
-    lastCommand, 
-    isListening, 
-    currentMode, 
-    isNativeMode, 
-    backgroundListening,
-    switchMode,
-    commandHistory 
+    isListening
   } = useVoice();
+  const [currentMode, setCurrentMode] = useState<'personal' | 'professional'>('personal');
   const { user, signOut } = useAuth();
   const { profile } = useProfile();
   const navigate = useNavigate();
@@ -81,7 +77,7 @@ const HomePage = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => switchMode(currentMode === 'personal' ? 'professional' : 'personal')}
+                onClick={() => setCurrentMode(currentMode === 'personal' ? 'professional' : 'personal')}
                 className="px-2 sm:px-4 py-1 sm:py-2 hover:bg-primary/10 text-xs sm:text-sm"
               >
                 Switch
@@ -138,12 +134,6 @@ const HomePage = () => {
                   <div className="flex flex-col items-center space-y-6">
                     <MicButton />
                     <ListeningIndicator />
-                    {lastCommand && (
-                      <div className="text-center p-4 bg-gradient-to-r from-muted/40 to-muted/20 rounded-xl border border-border/50">
-                        <p className="text-sm text-muted-foreground mb-1">Last command:</p>
-                        <p className="font-semibold text-lg">{lastCommand}</p>
-                      </div>
-                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -238,43 +228,13 @@ const HomePage = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                {commandHistory.length > 0 ? (
-                  <div className="space-y-4">
-                    {commandHistory.slice(0, 10).map((item) => (
-                      <div key={item.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-muted/40 to-muted/20 rounded-xl border border-border/50 hover:border-accent/30 transition-colors">
-                        <div className="flex-1">
-                          <p className="font-semibold text-base mb-1">{item.command}</p>
-                          <p className="text-sm text-muted-foreground">{item.action}</p>
-                        </div>
-                        <div className="text-right flex flex-col items-end gap-2">
-                          <p className="text-sm text-muted-foreground">
-                            {item.timestamp.toLocaleTimeString()}
-                          </p>
-                          <div className="flex items-center gap-2">
-                            {item.contextMode && (
-                              <Badge variant="outline" className="text-xs font-medium">
-                                {item.contextMode}
-                              </Badge>
-                            )}
-                            {item.success !== undefined && (
-                              <Badge variant={item.success ? "default" : "destructive"} className="text-xs font-medium">
-                                {item.success ? "Success" : "Failed"}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
+                <div className="text-center py-12">
                     <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-muted/50 to-muted/30 flex items-center justify-center">
                       <Mic className="w-8 h-8 text-muted-foreground" />
                     </div>
                     <p className="text-muted-foreground text-lg mb-2">No commands yet</p>
                     <p className="text-sm text-muted-foreground">Start by pressing the microphone button!</p>
                   </div>
-                )}
               </CardContent>
             </Card>
           </TabsContent>

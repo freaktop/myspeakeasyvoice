@@ -23,7 +23,7 @@ A powerful voice-controlled assistant app that works on both web and mobile plat
 ## 🚀 Quick Start
 
 ### Web Version
-1. Visit the [live app](https://84424d2b-0ee9-46f8-8ff0-7ac94de71049.lovableproject.com)
+1. Visit the [live app](https://ubiquitous-dodol-eafe6f.netlify.app)
 2. Sign up and grant microphone permissions
 3. Start using voice commands with your chosen wake phrase
 

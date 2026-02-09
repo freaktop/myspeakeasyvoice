@@ -8,12 +8,14 @@ import { Device } from '@capacitor/device';
 import AccessibilityService from '@/plugins/AccessibilityService';
 
 export interface SystemCommand {
-  type: 'open_app' | 'send_text' | 'scroll' | 'click' | 'navigate' | 'system_action';
+  type: 'open_app' | 'send_text' | 'scroll' | 'click' | 'navigate' | 'system_action' | 'type_text' | 'search' | 'media_control' | 'settings' | 'help' | 'delete' | 'copy' | 'paste' | 'screenshot';
   target?: string;
   text?: string;
   direction?: 'up' | 'down' | 'left' | 'right';
   coordinates?: { x: number; y: number };
-  action?: 'home' | 'back' | 'recent_apps' | 'volume_up' | 'volume_down';
+  action?: 'home' | 'back' | 'recent_apps' | 'volume_up' | 'volume_down' | 'play' | 'pause' | 'next' | 'previous' | 'mute' | 'unmute' | 'brightness_up' | 'brightness_down' | 'wifi_on' | 'wifi_off' | 'bluetooth_on' | 'bluetooth_off';
+  amount?: number;
+  urgency?: 'normal' | 'urgent';
 }
 
 export class NativeVoiceCommands {
@@ -75,6 +77,33 @@ export class NativeVoiceCommands {
         
         case 'system_action':
           return await this.performSystemAction(command.action!);
+        
+        case 'type_text':
+          return await this.typeText(command.text!);
+        
+        case 'search':
+          return await this.performSearch(command.text!);
+        
+        case 'media_control':
+          return await this.performMediaControl(command.action!);
+        
+        case 'settings':
+          return await this.openSettings(command.target);
+        
+        case 'help':
+          return await this.showHelp();
+        
+        case 'delete':
+          return await this.performDelete();
+        
+        case 'copy':
+          return await this.performCopy();
+        
+        case 'paste':
+          return await this.performPaste();
+        
+        case 'screenshot':
+          return await this.takeScreenshot();
         
         default:
           console.warn('Unknown command type:', command.type);
@@ -247,7 +276,28 @@ export class NativeVoiceCommands {
           return await this.callNativeMethod('volumeUp', {});
         case 'volume_down':
           return await this.callNativeMethod('volumeDown', {});
+        case 'brightness_up':
+          return await this.callNativeMethod('brightnessUp', {});
+        case 'brightness_down':
+          return await this.callNativeMethod('brightnessDown', {});
+        case 'wifi_on':
+          return await this.callNativeMethod('wifiOn', {});
+        case 'wifi_off':
+          return await this.callNativeMethod('wifiOff', {});
+        case 'bluetooth_on':
+          return await this.callNativeMethod('bluetoothOn', {});
+        case 'bluetooth_off':
+          return await this.callNativeMethod('bluetoothOff', {});
+        case 'play':
+        case 'pause':
+        case 'next':
+        case 'previous':
+        case 'mute':
+        case 'unmute':
+          // These are handled by performMediaControl, but included here for fallback
+          return await this.performMediaControl(action);
         default:
+          console.warn('Unknown system action:', action);
           return false;
       }
     } catch (error) {
@@ -420,9 +470,317 @@ export class NativeVoiceCommands {
       return { type: 'click' };
     }
     
+    // Typing commands - more specific than send_text
+    if (lowerCommand.match(/\b(type|write|dictate)\b/) && !lowerCommand.match(/\b(send|message)\b/)) {
+      const typePatterns = [
+        /(?:type|write|dictate)\s+[""']?(.+?)[""']?$/,
+        /(?:type|write|dictate)\s+(.+?)(?:\s+here)?$/,
+      ];
+      
+      for (const pattern of typePatterns) {
+        const match = lowerCommand.match(pattern);
+        if (match) {
+          return {
+            type: 'type_text' as any,
+            text: match[1].trim().replace(/[""']/g, '')
+          };
+        }
+      }
+    }
+    
+    // Search commands
+    if (lowerCommand.match(/\b(search|google|look up|find)\b/)) {
+      const searchPatterns = [
+        /(?:search|google|look up|find)\s+(?:for\s+)?(.+)$/,
+        /(?:search|google|look up|find)\s+(.+?)(?:\s+on\s+(.+))?$/,
+      ];
+      
+      for (const pattern of searchPatterns) {
+        const match = lowerCommand.match(pattern);
+        if (match) {
+          return {
+            type: 'search' as any,
+            text: match[1].trim()
+          };
+        }
+      }
+    }
+    
+    // Media control commands
+    if (lowerCommand.match(/\b(play|pause|stop|next|previous|skip|mute|unmute)\b/)) {
+      if (lowerCommand.match(/\b(play|start music|resume)\b/)) {
+        return { type: 'media_control' as any, action: 'play' };
+      } else if (lowerCommand.match(/\b(pause|stop music)\b/)) {
+        return { type: 'media_control' as any, action: 'pause' };
+      } else if (lowerCommand.match(/\b(next|skip|forward)\b/)) {
+        return { type: 'media_control' as any, action: 'next' };
+      } else if (lowerCommand.match(/\b(previous|back|go back)\b/)) {
+        return { type: 'media_control' as any, action: 'previous' };
+      } else if (lowerCommand.match(/\b(mute|silence)\b/)) {
+        return { type: 'media_control' as any, action: 'mute' };
+      } else if (lowerCommand.match(/\b(unmute|turn on sound)\b/)) {
+        return { type: 'media_control' as any, action: 'unmute' };
+      }
+    }
+    
+    // Settings commands
+    if (lowerCommand.match(/\b(settings|preferences|setup)\b/)) {
+      if (lowerCommand.match(/\b(wifi|wireless)\b/)) {
+        return { type: 'settings' as any, target: 'wifi' };
+      } else if (lowerCommand.match(/\b(bluetooth|bt)\b/)) {
+        return { type: 'settings' as any, target: 'bluetooth' };
+      } else if (lowerCommand.match(/\b(sound|audio|volume)\b/)) {
+        return { type: 'settings' as any, target: 'sound' };
+      } else if (lowerCommand.match(/\b(display|screen|brightness)\b/)) {
+        return { type: 'settings' as any, target: 'display' };
+      } else if (lowerCommand.match(/\b(apps|applications)\b/)) {
+        return { type: 'settings' as any, target: 'apps' };
+      } else if (lowerCommand.match(/\b(battery|power)\b/)) {
+        return { type: 'settings' as any, target: 'battery' };
+      } else {
+        return { type: 'settings' as any };
+      }
+    }
+    
+    // Help command
+    if (lowerCommand.match(/\b(help|commands|what can i say|list commands)\b/)) {
+      return { type: 'help' as any };
+    }
+    
+    // Text editing commands
+    if (lowerCommand.match(/\b(copy|duplicate)\b/)) {
+      return { type: 'copy' as any };
+    }
+    if (lowerCommand.match(/\b(paste|insert)\b/)) {
+      return { type: 'paste' as any };
+    }
+    if (lowerCommand.match(/\b(delete|remove|erase|clear)\b/)) {
+      return { type: 'delete' as any };
+    }
+    
+    // Screenshot command
+    if (lowerCommand.match(/\b(screenshot|capture|screen capture|take picture)\b/)) {
+      return { type: 'screenshot' as any };
+    }
+    
+    // Enhanced system actions
+    if (lowerCommand.match(/\b(brightness up|increase brightness|brighter)\b/)) {
+      return { type: 'system_action' as any, action: 'brightness_up' };
+    }
+    if (lowerCommand.match(/\b(brightness down|decrease brightness|dimmer)\b/)) {
+      return { type: 'system_action' as any, action: 'brightness_down' };
+    }
+    if (lowerCommand.match(/\b(wifi on|enable wifi|turn on wifi)\b/)) {
+      return { type: 'system_action' as any, action: 'wifi_on' };
+    }
+    if (lowerCommand.match(/\b(wifi off|disable wifi|turn off wifi)\b/)) {
+      return { type: 'system_action' as any, action: 'wifi_off' };
+    }
+    if (lowerCommand.match(/\b(bluetooth on|enable bluetooth)\b/)) {
+      return { type: 'system_action' as any, action: 'bluetooth_on' };
+    }
+    if (lowerCommand.match(/\b(bluetooth off|disable bluetooth)\b/)) {
+      return { type: 'system_action' as any, action: 'bluetooth_off' };
+    }
+
     console.log('No command pattern matched for:', lowerCommand);
     return null;
   }
+
+  // New command execution methods
+  private async typeText(text: string): Promise<boolean> {
+    try {
+      if (this.isNative && this.deviceInfo?.platform === 'android') {
+        const result = await AccessibilityService.sendText({ text });
+        return result.success;
+      }
+      return await this.callNativeMethod('insertText', { text });
+    } catch (error) {
+      console.error('Failed to type text:', error);
+      return false;
+    }
+  }
+
+  private async performSearch(query: string): Promise<boolean> {
+    try {
+      const searchUrl = `https://www.google.com/search?q=${encodeURIComponent(query)}`;
+      
+      if (this.isNative) {
+        await AppLauncher.openUrl({ url: searchUrl });
+        return true;
+      } else {
+        window.open(searchUrl, '_blank');
+        return true;
+      }
+    } catch (error) {
+      console.error('Failed to perform search:', error);
+      return false;
+    }
+  }
+
+  private async performMediaControl(action: string): Promise<boolean> {
+    try {
+      if (this.isNative && this.deviceInfo?.platform === 'android') {
+        const result = await AccessibilityService.performMediaControl({ action });
+        return result.success;
+      }
+      return await this.callNativeMethod('mediaControl', { action });
+    } catch (error) {
+      console.error('Failed to control media:', error);
+      return false;
+    }
+  }
+
+  private async openSettings(target?: string): Promise<boolean> {
+    try {
+      if (target) {
+        // Open specific settings page
+        const settingsPages: { [key: string]: string } = {
+          'wifi': 'android.settings.WIFI_SETTINGS',
+          'bluetooth': 'android.settings.BLUETOOTH_SETTINGS',
+          'sound': 'android.settings.SOUND_SETTINGS',
+          'display': 'android.settings.DISPLAY_SETTINGS',
+          'apps': 'android.settings.APPLICATION_SETTINGS',
+          'battery': 'android.settings.BATTERY_SAVER_SETTINGS'
+        };
+
+        const settingPage = settingsPages[target.toLowerCase()];
+        if (settingPage && this.isNative && this.deviceInfo?.platform === 'android') {
+          const result = await AccessibilityService.openSettings({ page: settingPage });
+          return result.success;
+        }
+      }
+      
+      // Open general settings
+      return await this.openApp('settings');
+    } catch (error) {
+      console.error('Failed to open settings:', error);
+      return false;
+    }
+  }
+
+  private async showHelp(): Promise<boolean> {
+    try {
+      const helpText = `
+        SpeakEasy Voice Commands:
+        • "Open [app name]" - Launch applications
+        • "Type [text]" - Insert text at cursor
+        • "Search for [query]" - Web search
+        • "Play/Pause/Next/Previous" - Media control
+        • "Open settings" - System settings
+        • "Screenshot" - Capture screen
+        • "Copy/Paste/Delete" - Text editing
+        • "Help" - Show this message
+      `;
+      
+      console.log(helpText);
+      
+      if (this.isNative) {
+        // Show help in a native dialog or toast
+        return await this.callNativeMethod('showHelp', { message: helpText });
+      } else {
+        alert(helpText);
+        return true;
+      }
+    } catch (error) {
+      console.error('Failed to show help:', error);
+      return false;
+    }
+  }
+
+  private async performDelete(): Promise<boolean> {
+    try {
+      if (this.isNative && this.deviceInfo?.platform === 'android') {
+        const result = await AccessibilityService.performDelete();
+        return result.success;
+      }
+      return await this.callNativeMethod('delete', {});
+    } catch (error) {
+      console.error('Failed to perform delete:', error);
+      return false;
+    }
+  }
+
+  private async performCopy(): Promise<boolean> {
+    try {
+      if (this.isNative && this.deviceInfo?.platform === 'android') {
+        const result = await AccessibilityService.performCopy();
+        return result.success;
+      }
+      return await this.callNativeMethod('copy', {});
+    } catch (error) {
+      console.error('Failed to perform copy:', error);
+      return false;
+    }
+  }
+
+  private async performPaste(): Promise<boolean> {
+    try {
+      if (this.isNative && this.deviceInfo?.platform === 'android') {
+        const result = await AccessibilityService.performPaste();
+        return result.success;
+      }
+      return await this.callNativeMethod('paste', {});
+    } catch (error) {
+      console.error('Failed to perform paste:', error);
+      return false;
+    }
+  }
+
+  private async takeScreenshot(): Promise<boolean> {
+    try {
+      if (this.isNative) {
+        const result = await Camera.getPhoto({
+          quality: 90,
+          allowEditing: false,
+          resultType: CameraResultType.Uri
+        });
+        
+        // Save or share the screenshot
+        await Share.share({
+          title: 'Screenshot',
+          text: 'Screenshot captured by SpeakEasy',
+          url: result.webPath
+        });
+        
+        return true;
+      } else {
+        // Web fallback - use screen capture API if available
+        if ('mediaDevices' in navigator && 'getDisplayMedia' in navigator.mediaDevices) {
+          const stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+          const track = stream.getVideoTracks()[0];
+          const imageCapture = new (window as any).ImageCapture(track);
+          const bitmap = await imageCapture.grabFrame();
+          
+          // Convert to blob and download
+          const canvas = document.createElement('canvas');
+          canvas.width = bitmap.width;
+          canvas.height = bitmap.height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(bitmap, 0, 0);
+          
+          canvas.toBlob((blob: Blob | null) => {
+            if (blob) {
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = `screenshot-${Date.now()}.png`;
+              a.click();
+              URL.revokeObjectURL(url);
+            }
+          });
+          
+          track.stop();
+          return true;
+        }
+      }
+      return false;
+    } catch (error) {
+      console.error('Failed to take screenshot:', error);
+      return false;
+    }
+  }
+
 }
 
 export const nativeVoiceCommands = NativeVoiceCommands.getInstance();

@@ -1,11 +1,12 @@
 // AI Conversation Interface with OpenAI Realtime API
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { useRealtimeChat } from '@/hooks/useRealtimeChat';
+
 import { 
   Mic, 
   MicOff, 
@@ -21,6 +22,8 @@ import {
 
 const RealtimeVoiceInterface = () => {
   const [textInput, setTextInput] = useState('');
+  const [isMicListening, setIsMicListening] = useState(false);
+  const recognitionRef = useRef<any>(null);
   const {
     messages,
     isConnected,
@@ -32,6 +35,16 @@ const RealtimeVoiceInterface = () => {
     clearMessages
   } = useRealtimeChat();
 
+  useEffect(() => {
+    return () => {
+      try {
+        recognitionRef.current?.stop?.();
+      } catch {
+        // ignore
+      }
+    };
+  }, []);
+
   const handleSendText = async () => {
     if (!textInput.trim()) return;
 
@@ -40,6 +53,73 @@ const RealtimeVoiceInterface = () => {
       setTextInput('');
     } catch (error) {
       console.error('Error sending message:', error);
+    }
+  };
+
+  const toggleMic = async () => {
+    if (!isConnected) return;
+
+    // Stop if currently listening
+    if (isMicListening) {
+      try {
+        recognitionRef.current?.stop?.();
+      } catch {
+        // ignore
+      }
+      setIsMicListening(false);
+      return;
+    }
+
+    const WebSpeechRecognition =
+      (window as any).webkitSpeechRecognition || (window as any).SpeechRecognition;
+    if (!WebSpeechRecognition) {
+      console.error('SpeechRecognition not available in this browser');
+      return;
+    }
+
+    if (!recognitionRef.current) {
+      const recognition = new WebSpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
+      recognition.maxAlternatives = 1;
+
+      recognition.onresult = (event: any) => {
+        const transcript =
+          event?.results?.[0]?.[0]?.transcript != null
+            ? String(event.results[0][0].transcript).trim()
+            : '';
+
+        if (transcript) {
+          setTextInput(transcript);
+          // Send immediately so you can speak commands without typing
+          void (async () => {
+            try {
+              await sendMessage(transcript);
+              setTextInput('');
+            } catch (error) {
+              console.error('Error sending voice message:', error);
+            }
+          })();
+        }
+      };
+
+      recognition.onerror = () => {
+        setIsMicListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsMicListening(false);
+      };
+
+      recognitionRef.current = recognition;
+    }
+
+    try {
+      recognitionRef.current.start();
+      setIsMicListening(true);
+    } catch {
+      setIsMicListening(false);
     }
   };
 
@@ -195,6 +275,16 @@ const RealtimeVoiceInterface = () => {
               placeholder="Type a message or just speak naturally..."
               className="flex-1"
             />
+            <Button
+              onClick={toggleMic}
+              variant="outline"
+              size="sm"
+              disabled={!isConnected}
+              className={isMicListening ? 'border-primary' : ''}
+              aria-label={isMicListening ? 'Stop microphone' : 'Start microphone'}
+            >
+              {isMicListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+            </Button>
             <Button 
               onClick={handleSendText}
               disabled={!textInput.trim()}

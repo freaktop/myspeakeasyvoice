@@ -1,18 +1,18 @@
 // React hook for managing OpenAI Realtime API conversation
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { RealtimeChat, RealtimeMessage } from '@/utils/RealtimeChat';
+import { FirebaseVoiceService, FirebaseVoiceMessage, ChatHistoryMessage } from '@/services/firebaseVoiceService';
 import { useToast } from '@/hooks/use-toast';
 
 export const useRealtimeChat = () => {
-  const [messages, setMessages] = useState<RealtimeMessage[]>([]);
+  const [messages, setMessages] = useState<FirebaseVoiceMessage[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   
-  const chatRef = useRef<RealtimeChat | null>(null);
+  const chatRef = useRef<FirebaseVoiceService | null>(null);
 
-  const addMessage = useCallback((message: RealtimeMessage) => {
+  const addMessage = useCallback((message: FirebaseVoiceMessage) => {
     console.log("Adding message:", message);
     setMessages(prev => [...prev, message]);
   }, []);
@@ -61,7 +61,7 @@ export const useRealtimeChat = () => {
       setIsLoading(true);
       console.log("Initializing realtime chat...");
       
-      chatRef.current = new RealtimeChat({
+      chatRef.current = new FirebaseVoiceService({
         onMessage: addMessage,
         onSpeakingChange: handleSpeakingChange,
         onConnectionChange: handleConnectionChange,
@@ -92,12 +92,20 @@ export const useRealtimeChat = () => {
     }
 
     try {
-      await chatRef.current.sendTextMessage(text);
+      const history: ChatHistoryMessage[] = messages
+        .filter((m) => m.type === 'user' || m.type === 'assistant')
+        .slice(-10)
+        .map((m) => ({
+          role: m.type,
+          content: m.content,
+        }));
+
+      await chatRef.current.sendTextMessage(text, history);
     } catch (error) {
       console.error("Error sending message:", error);
       throw error;
     }
-  }, []);
+  }, [messages]);
 
   const clearMessages = useCallback(() => {
     setMessages([]);

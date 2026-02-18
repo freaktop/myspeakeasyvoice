@@ -1,6 +1,5 @@
 // OpenAI Realtime API WebSocket client
 import { AudioRecorder, encodeAudioForAPI, playAudioData, clearAudioQueue } from './RealtimeAudio';
-import { supabase } from '@/integrations/supabase/client';
 
 export interface RealtimeMessage {
   id: string;

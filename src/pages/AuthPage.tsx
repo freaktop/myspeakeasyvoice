@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { auth } from '@/integrations/firebase/client';
 import { Logo } from '@/components/Logo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -56,22 +57,14 @@ const AuthPage = () => {
     }
 
     try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/auth`,
+      await sendPasswordResetEmail(auth, email, {
+        url: `${window.location.origin}/auth`,
       });
 
-      if (error) {
-        toast({
-          title: "Reset failed",
-          description: error.message,
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Reset email sent!",
-          description: "Check your email for password reset instructions.",
-        });
-      }
+      toast({
+        title: "Reset email sent!",
+        description: "Check your email for password reset instructions.",
+      });
     } catch (error) {
       toast({
         title: "Error",
@@ -89,8 +82,8 @@ const AuthPage = () => {
       const { data, error } = await signUp(email, password, displayName);
       
       if (error) {
-        // Check if it's a duplicate email error
-        if (error.message.includes('User already registered')) {
+        const authError = error as any;
+        if (authError?.code === 'auth/email-already-in-use') {
           toast({
             title: "Account exists",
             description: "An account with this email already exists. Try signing in instead or reset your password.",
@@ -104,15 +97,7 @@ const AuthPage = () => {
           });
         }
       } else {
-        // Check if user needs email confirmation
-        if (data?.user && !data.user.email_confirmed_at) {
-          // Email confirmation required
-          toast({
-            title: "Account created!",
-            description: "Please check your email to confirm your account.",
-          });
-        } else if (data?.user) {
-          // User is automatically confirmed and logged in (email confirmation disabled)
+        if (data?.user) {
           toast({
             title: "Welcome to SpeakEasy!",
             description: "Your account has been created and you're now logged in.",

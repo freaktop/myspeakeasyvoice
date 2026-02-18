@@ -131,6 +131,14 @@ The Android APK is automatically built via GitHub Actions:
 - **Android commands failing**: Verify accessibility service enabled
 - **Background listening issues**: Disable battery optimization
 
+### Console noise (development)
+If you see repeated console errors like `proxy.js: Uncaught Error: Attempting to use a disconnected port object`, that is typically caused by browser extensions (often React DevTools or the IDE preview bridge) losing their messaging port. To verify:
+
+- **Open in a normal browser tab** at `http://127.0.0.1:5173/` (not the IDE preview)
+- **Try an Incognito / InPrivate window** with extensions disabled
+
+If the message disappears, it is extension/preview noise and not an app runtime crash.
+
 ### Get Help
 - File issues on GitHub with device model, OS version, and error details
 - Check the troubleshooting guides first

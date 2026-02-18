@@ -172,10 +172,7 @@ export const VoiceProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           let finalTranscript = "";
           for (let i = event.resultIndex; i < event.results.length; i++) {
             if (event.results[i].isFinal) {
-              const confidence = event.results[i][0].confidence;
-              if (confidence > 0.7) {
-                finalTranscript += event.results[i][0].transcript;
-              }
+              finalTranscript += event.results[i][0].transcript;
             }
           }
           const transcript = finalTranscript.trim();
@@ -185,7 +182,9 @@ export const VoiceProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         };
 
         recognition.onerror = (event: any) => {
-          console.error("Speech recognition error:", event.error);
+          if (event.error !== "no-speech") {
+            console.error("Speech recognition error:", event.error);
+          }
           recognitionActiveRef.current = false;
 
           if (event.error === "not-allowed" || event.error === "service-not-allowed") {

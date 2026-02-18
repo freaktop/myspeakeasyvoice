@@ -21,7 +21,7 @@ const App = () => (
           <VoiceProvider>
             <Toaster />
             <Sonner />
-            <BrowserRouter>
+            <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
               <Routes>
                 <Route path="/*" element={<Home />} />
                 <Route path="*" element={<NotFound />} />

@@ -12,6 +12,7 @@ export class VoiceFeedbackService {
   private isEnabled = true;
   private speechSynthesis: SpeechSynthesis | null = null;
   private isNative = false;
+  private utteranceId = 0;
 
   constructor() {
     this.isNative = Capacitor.isNativePlatform();
@@ -41,6 +42,8 @@ export class VoiceFeedbackService {
     const feedback = typeof message === 'string' ? { text: message } : message;
     
     try {
+      const currentId = ++this.utteranceId;
+
       // Cancel any ongoing speech
       this.speechSynthesis.cancel();
 
@@ -69,16 +72,36 @@ export class VoiceFeedbackService {
         await Haptics.impact({ style: ImpactStyle.Medium });
       }
 
-      return new Promise<void>((resolve, reject) => {
+      await new Promise<void>((resolve) => {
         utterance.onend = () => resolve();
         utterance.onerror = (event) => {
-          console.error('Speech synthesis error:', event);
-          reject(event);
+          // Treat all speech synthesis errors as non-fatal.
+          // Browsers commonly emit errors when we cancel speech to play a new utterance,
+          // and some implementations provide little/no error detail.
+
+          // If a newer utterance started, ignore.
+          if (currentId !== this.utteranceId) {
+            resolve();
+            return;
+          }
+
+          // Log only if this was the active utterance and it wasn't a normal cancel.
+          if (event.error && event.error !== 'interrupted' && event.error !== 'canceled') {
+            console.error('Speech synthesis error:', event);
+          }
+          resolve();
         };
 
         this.speechSynthesis.speak(utterance);
       });
     } catch (error) {
+      // Swallow expected cancellation errors so they don't become unhandled rejections.
+      if (error && typeof error === 'object' && 'error' in error) {
+        const e = error as SpeechSynthesisErrorEvent;
+        if (e.error === 'interrupted' || e.error === 'canceled') {
+          return;
+        }
+      }
       console.error('Failed to speak message:', error);
     }
   }

@@ -37,9 +37,9 @@ Once the wrapper can access the distribution (either from the cache or via netwo
 ## Version Summary
 - **Java**: 21 (LTS)
 - **Kotlin JVM Target**: 21
-- **Android Gradle Plugin (AGP)**: 8.7.3
-- **Gradle**: 8.11.1
-- **Kotlin Gradle Plugin**: 1.9.25
+- **Android Gradle Plugin (AGP)**: 8.13.2
+- **Gradle**: 8.13
+- **Kotlin Gradle Plugin**: 2.1.0
 
 ---
 

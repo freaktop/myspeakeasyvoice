@@ -35,10 +35,11 @@ export const AndroidSetupGuide = () => {
       case 1:
         await androidAccessibilitySetup.requestPermissions();
         break;
-      case 2:
+      case 2: {
         const success = await androidAccessibilitySetup.startBackgroundListening();
         setBackgroundListening(success);
         break;
+      }
       case 3:
         androidAccessibilitySetup.showSetupInstructions();
         break;

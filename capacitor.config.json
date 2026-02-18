@@ -1,0 +1,6 @@
+{
+  "appId": "com.perezcode.speakeasy",
+  "appName": "SpeakEasy",
+  "webDir": "dist",
+  "bundledWebRuntime": false
+}

@@ -1,30 +1,29 @@
 // React hook for managing OpenAI Realtime API conversation
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { RealtimeChat, RealtimeMessage } from '@/utils/RealtimeChat';
+import { FirebaseVoiceService, FirebaseVoiceMessage, ChatHistoryMessage } from '@/services/firebaseVoiceService';
 import { useToast } from '@/hooks/use-toast';
-import { logger } from '@/utils/logger';
 
 export const useRealtimeChat = () => {
-  const [messages, setMessages] = useState<RealtimeMessage[]>([]);
+  const [messages, setMessages] = useState<FirebaseVoiceMessage[]>([]);
   const [isConnected, setIsConnected] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   
-  const chatRef = useRef<RealtimeChat | null>(null);
+  const chatRef = useRef<FirebaseVoiceService | null>(null);
 
-  const addMessage = useCallback((message: RealtimeMessage) => {
-    logger.log("Adding message:", message);
+  const addMessage = useCallback((message: FirebaseVoiceMessage) => {
+    console.log("Adding message:", message);
     setMessages(prev => [...prev, message]);
   }, []);
 
   const handleSpeakingChange = useCallback((speaking: boolean) => {
-    logger.log("Speaking changed:", speaking);
+    console.log("Speaking changed:", speaking);
     setIsSpeaking(speaking);
   }, []);
 
   const handleConnectionChange = useCallback((connected: boolean) => {
-    logger.log("Connection changed:", connected);
+    console.log("Connection changed:", connected);
     setIsConnected(connected);
     setIsLoading(false);
     
@@ -54,15 +53,15 @@ export const useRealtimeChat = () => {
 
   const connect = useCallback(async () => {
     if (chatRef.current?.connected) {
-      logger.log("Already connected");
+      console.log("Already connected");
       return;
     }
 
     try {
       setIsLoading(true);
-      logger.log("Initializing realtime chat...");
+      console.log("Initializing realtime chat...");
       
-      chatRef.current = new RealtimeChat({
+      chatRef.current = new FirebaseVoiceService({
         onMessage: addMessage,
         onSpeakingChange: handleSpeakingChange,
         onConnectionChange: handleConnectionChange,
@@ -78,7 +77,7 @@ export const useRealtimeChat = () => {
   }, [addMessage, handleSpeakingChange, handleConnectionChange, handleError]);
 
   const disconnect = useCallback(() => {
-    logger.log("Disconnecting realtime chat...");
+    console.log("Disconnecting realtime chat...");
     chatRef.current?.disconnect();
     chatRef.current = null;
     setMessages([]);
@@ -93,12 +92,20 @@ export const useRealtimeChat = () => {
     }
 
     try {
-      await chatRef.current.sendTextMessage(text);
+      const history: ChatHistoryMessage[] = messages
+        .filter((m) => m.type === 'user' || m.type === 'assistant')
+        .slice(-10)
+        .map((m) => ({
+          role: m.type,
+          content: m.content,
+        }));
+
+      await chatRef.current.sendTextMessage(text, history);
     } catch (error) {
       console.error("Error sending message:", error);
       throw error;
     }
-  }, []);
+  }, [messages]);
 
   const clearMessages = useCallback(() => {
     setMessages([]);
@@ -107,7 +114,7 @@ export const useRealtimeChat = () => {
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      logger.log("Cleaning up realtime chat...");
+      console.log("Cleaning up realtime chat...");
       chatRef.current?.disconnect();
     };
   }, []);

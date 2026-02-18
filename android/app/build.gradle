@@ -5,64 +5,41 @@ plugins {
 
 // Android config
 android {
-    namespace "com.lovable.routinevoicepilot"
-    compileSdk 36
+    namespace = "com.lovable.routinevoicepilot"
+    compileSdk = 34
 
     defaultConfig {
-        applicationId "com.lovable.routinevoicepilot"
-        minSdk 23
-        final def var = targetSdk 35
-        versionCode 2
-        versionName "1.1.0"
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-
-        aaptOptions {
-            // Exclude unnecessary files from packaged assets
-            ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
-        }
-    }
-
-    signingConfigs {
-        release {
-            // For production: store these in gradle.properties (not committed) or use environment variables
-            // Example in gradle.properties:
-            // RELEASE_STORE_FILE=path/to/your/release-key.jks
-            // RELEASE_STORE_PASSWORD=your_store_password
-            // RELEASE_KEY_ALIAS=your_key_alias
-            // RELEASE_KEY_PASSWORD=your_key_password
-            
-            if (project.hasProperty('RELEASE_STORE_FILE')) {
-                storeFile file(project.property('RELEASE_STORE_FILE'))
-                storePassword project.property('RELEASE_STORE_PASSWORD')
-                keyAlias project.property('RELEASE_KEY_ALIAS')
-                keyPassword project.property('RELEASE_KEY_PASSWORD')
-            }
-        }
+        applicationId = "com.lovable.routinevoicepilot"
+        minSdk = 23
+        targetSdk = 34
+        versionCode = 2
+        versionName = "1.1.0"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     buildTypes {
-        release {
-            if (project.hasProperty('RELEASE_STORE_FILE')) {
-                signingConfig signingConfigs.release
-            }
+        debug {
+            debuggable true
             minifyEnabled false
+        }
+        release {
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_21
-        targetCompatibility JavaVersion.VERSION_21
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
 
     kotlinOptions {
-        // Kotlin JVM target should match the Java language level used by compileOptions
-        jvmTarget = "21"
+        jvmTarget = '1.8'
     }
     lint {
-        abortOnError false
+        abortOnError = false
     }
-
 }
 
 // Repositories for local Cordova plugins

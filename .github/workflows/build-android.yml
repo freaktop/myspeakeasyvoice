@@ -62,7 +62,7 @@ jobs:
     
     strategy:
       matrix:
-        java-version: [17, 21]
+        java-version: [21]
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -84,7 +84,7 @@ jobs:
 
     - name: Install Android SDK packages
       run: |
-        sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0" "cmdline-tools;latest"
+        sdkmanager --install "platform-tools" "platforms;android-36" "build-tools;36.0.0" "cmdline-tools;latest"
         yes | sdkmanager --licenses
 
     - name: Install dependencies

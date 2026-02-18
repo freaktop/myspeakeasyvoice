@@ -2,6 +2,7 @@ package com.lovable.routinevoicepilot;
 
 import android.os.Bundle;
 import android.webkit.ConsoleMessage;
+import android.webkit.PermissionRequest;
 import android.webkit.WebChromeClient;
 import android.widget.Toast;
 import com.getcapacitor.BridgeActivity;
@@ -25,9 +26,12 @@ public class MainActivity extends BridgeActivity {
                     android.util.Log.d("JS_CONSOLE", msg);
                 }
                 return true;
+            }
 
-
-
+            @Override
+            public void onPermissionRequest(final PermissionRequest request) {
+                // Auto-grant microphone permission to WebView
+                request.grant(request.getResources());
             }
         });
     }
